@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ShiroIDSiteResultController.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Stormpath :: Shiro :: Servlet</a> &gt; <a href="index.source.html" class="el_package">com.stormpath.shiro.servlet.mvc</a> &gt; <span class="el_source">ShiroIDSiteResultController.java</span></div><h1>ShiroIDSiteResultController.java</h1><pre class="source lang-java linenums">package com.stormpath.shiro.servlet.mvc;
+
+import com.stormpath.sdk.idsite.AuthenticationResult;
+import com.stormpath.sdk.servlet.mvc.IdSiteResultController;
+import com.stormpath.sdk.servlet.mvc.ViewModel;
+import com.stormpath.shiro.realm.StormpathWebRealm;
+import org.apache.shiro.SecurityUtils;
+import org.apache.shiro.authc.AuthenticationException;
+import org.apache.shiro.authc.AuthenticationToken;
+import org.apache.shiro.config.ConfigurationException;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
+
+<span class="fc" id="L16">public class ShiroIDSiteResultController extends IdSiteResultController {</span>
+
+    @Override
+    protected ViewModel onAuthentication(HttpServletRequest request, HttpServletResponse response, AuthenticationResult result) {
+<span class="fc" id="L20">        ViewModel vm = super.onAuthentication(request, response, result);</span>
+
+<span class="fc" id="L22">        AuthenticationToken token = new StormpathWebRealm.AccessTokenResultAuthToken(result.getAccount());</span>
+
+        try {
+<span class="fc" id="L25">            SecurityUtils.getSubject().login(token);</span>
+<span class="fc" id="L26">        } catch (AuthenticationException e) {</span>
+<span class="fc" id="L27">            String msg = &quot;Stormpath Shiro realm is not configured correctly, see documentation for: &quot; + StormpathWebRealm.class.getName();</span>
+<span class="fc" id="L28">            throw new ConfigurationException(msg, e);</span>
+<span class="fc" id="L29">        }</span>
+
+<span class="fc" id="L31">        return vm;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.7.7.201606060606</span></div></body></html>

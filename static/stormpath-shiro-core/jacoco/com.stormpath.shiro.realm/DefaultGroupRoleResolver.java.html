@@ -1,0 +1,181 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>DefaultGroupRoleResolver.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Stormpath Shiro :: Core</a> &gt; <a href="index.source.html" class="el_package">com.stormpath.shiro.realm</a> &gt; <span class="el_source">DefaultGroupRoleResolver.java</span></div><h1>DefaultGroupRoleResolver.java</h1><pre class="source lang-java linenums">/*
+ * Copyright 2013 Stormpath, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package com.stormpath.shiro.realm;
+
+import com.stormpath.sdk.group.Group;
+import org.apache.shiro.util.CollectionUtils;
+
+import java.util.HashSet;
+import java.util.Set;
+
+/**
+ * Default implementation of the {@code GroupRoleResolver} interface that allows a Stormpath
+ * {@link Group} to be translated into Shiro role names based on custom preferences.
+ * &lt;h2&gt;Overview&lt;/h2&gt;
+ * This implementation converts a Stormpath Group into one or more role names based on one or more configured
+ * {@link Mode Mode}s:
+ * &lt;table&gt;
+ *     &lt;thead&gt;
+ *         &lt;tr&gt;
+ *             &lt;th&gt;Mode (case insensitive)&lt;/th&gt;
+ *             &lt;th&gt;Behavior&lt;/th&gt;
+ *             &lt;th&gt;Example&lt;/th&gt;
+ *         &lt;/tr&gt;
+ *     &lt;/thead&gt;
+ *     &lt;tbody&gt;
+ *         &lt;tr&gt;
+ *             &lt;td&gt;HREF&lt;/td&gt;
+ *             &lt;td&gt;Returns the Group's fully qualified HREF as the role name&lt;/td&gt;
+ *             &lt;td&gt;{@code https://api.stormpath.com/v1/groups/upXiExAmPlEfA5L1G5ZaSQ}&lt;/td&gt;
+ *         &lt;/tr&gt;
+ *         &lt;tr&gt;
+ *             &lt;td&gt;ID&lt;/td&gt;
+ *             &lt;td&gt;Returns Group's globally unique identifier as the role name&lt;/td&gt;
+ *             &lt;td&gt;{@code upXiExAmPlEfA5L1G5ZaSQ}&lt;/td&gt;
+ *         &lt;/tr&gt;
+ *         &lt;tr&gt;
+ *             &lt;td&gt;NAME&lt;/td&gt;
+ *             &lt;td&gt;Returns Group's name as the role name&lt;/td&gt;
+ *             &lt;td&gt;{@code administrators}&lt;/td&gt;
+ *         &lt;/tr&gt;
+ *     &lt;/tbody&gt;
+ * &lt;/table&gt;
+ * &lt;h2&gt;Usage&lt;/h2&gt;
+ * You can choose one or more modes either by referencing the {@link Mode Mode} enum values directly, or by using
+ * the mode string names.
+ * &lt;p/&gt;
+ * For example, in code:
+ * &lt;pre&gt;
+ * Set&amp;lt;DefaultGroupRoleResolver.Mode&amp;gt; modes = CollectionUtils.asSet(
+ *     DefaultGroupRoleResolver.Mode.HREF, DefaultGroupRoleResolver.Mode.ID
+ * );
+ * groupRoleResolver.setModes(modes);
+ * &lt;/pre&gt;
+ * &lt;p/&gt;
+ * Or maybe in shiro .ini:
+ * &lt;pre&gt;
+ * applicationRealm.groupRoleResolver.modeNames = href, id
+ * &lt;/pre&gt;
+ * In the above configuration, each Group translates into two Shiro role names: one role name is the raw href itself,
+ * the other role name is the Group ID.  You can specify one or more modes to translate into one or more role names
+ * respectively.
+ * &lt;i&gt;modeNames are case-insensitive&lt;/i&gt;.
+ * &lt;p/&gt;
+ * &lt;b&gt;WARNING:&lt;/b&gt; Group Names, while easier to read in code, can change at any time via a REST API call or by using
+ * the Stormpath UI Console.  It is &lt;em&gt;strongly&lt;/em&gt; recommended to use only the HREF or ID modes as these values
+ * will never change.  Acquiring group names might also incur a REST server call, whereas the the HREF is guaranteed
+ * to be present.
+ *
+ * @since 0.2
+ */
+public class DefaultGroupRoleResolver implements GroupRoleResolver {
+
+    private Set&lt;Mode&gt; modes;
+
+<span class="fc" id="L88">    public DefaultGroupRoleResolver() {</span>
+<span class="fc" id="L89">        this.modes = CollectionUtils.asSet(Mode.HREF);</span>
+<span class="fc" id="L90">    }</span>
+
+    public Set&lt;Mode&gt; getModes() {
+<span class="fc" id="L93">        return modes;</span>
+    }
+
+    public void setModes(Set&lt;Mode&gt; modes) {
+<span class="fc bfc" id="L97" title="All 4 branches covered.">        if (modes == null || modes.isEmpty()) {</span>
+<span class="fc" id="L98">            throw new IllegalArgumentException(&quot;modes property cannot be null or empty.&quot;);</span>
+        }
+<span class="fc" id="L100">        this.modes = modes;</span>
+<span class="fc" id="L101">    }</span>
+
+    public Set&lt;String&gt; getModeNames() {
+<span class="fc" id="L104">        Set&lt;String&gt; names = new HashSet&lt;String&gt;(modes.size());</span>
+<span class="fc bfc" id="L105" title="All 2 branches covered.">        for (Mode mode : modes) {</span>
+<span class="fc" id="L106">            names.add(mode.name());</span>
+<span class="fc" id="L107">        }</span>
+<span class="fc" id="L108">        return names;</span>
+    }
+
+    public void setModeNames(Set&lt;String&gt; modeNames) {
+<span class="fc bfc" id="L112" title="All 4 branches covered.">        if (modeNames == null || modeNames.isEmpty()) {</span>
+<span class="fc" id="L113">            throw new IllegalArgumentException(&quot;modeNames cannot be null or empty&quot;);</span>
+        }
+<span class="fc" id="L115">        Set&lt;Mode&gt; modes = new HashSet&lt;Mode&gt;(CollectionUtils.size(modeNames));</span>
+<span class="fc bfc" id="L116" title="All 2 branches covered.">        for (String name : modeNames) {</span>
+<span class="fc" id="L117">            modes.add(Mode.fromString(name));</span>
+<span class="fc" id="L118">        }</span>
+<span class="fc" id="L119">        setModes(modes);</span>
+<span class="fc" id="L120">    }</span>
+
+    @Override
+    public Set&lt;String&gt; resolveRoles(Group group) {
+
+<span class="fc" id="L125">        Set&lt;String&gt; set = new HashSet&lt;String&gt;();</span>
+
+<span class="fc" id="L127">        Set&lt;Mode&gt; modes = getModes();</span>
+
+<span class="fc" id="L129">        String groupHref = group.getHref();</span>
+
+        //REST resource hrefs should never ever be null:
+<span class="fc bfc" id="L132" title="All 2 branches covered.">        if (groupHref == null) {</span>
+<span class="fc" id="L133">            throw new IllegalStateException(&quot;Group does not have an href property.  This should never happen.&quot;);</span>
+        }
+
+<span class="fc bfc" id="L136" title="All 2 branches covered.">        if (modes.contains(Mode.HREF)) {</span>
+<span class="fc" id="L137">            set.add(groupHref);</span>
+        }
+<span class="fc bfc" id="L139" title="All 2 branches covered.">        if (modes.contains(Mode.ID)) {</span>
+<span class="fc" id="L140">            String instanceId = getInstanceId(groupHref);</span>
+<span class="fc bfc" id="L141" title="All 2 branches covered.">            if (instanceId != null) {</span>
+<span class="fc" id="L142">                set.add(instanceId);</span>
+            }
+        }
+<span class="fc bfc" id="L145" title="All 2 branches covered.">        if (modes.contains(Mode.NAME)) {</span>
+<span class="fc" id="L146">            String name = group.getName();</span>
+<span class="pc bpc" id="L147" title="1 of 2 branches missed.">            if (name != null) {</span>
+<span class="fc" id="L148">                set.add(name);</span>
+            }
+
+        }
+
+<span class="fc" id="L153">        return set;</span>
+    }
+
+    private String getInstanceId(String href) {
+<span class="fc" id="L157">        int i = href.lastIndexOf('/');</span>
+<span class="fc bfc" id="L158" title="All 2 branches covered.">        if (i &gt;= 0) {</span>
+<span class="fc" id="L159">            return href.substring(i + 1);</span>
+        }
+<span class="fc" id="L161">        return null;</span>
+    }
+
+<span class="pc" id="L164">    public enum Mode {</span>
+
+<span class="fc" id="L166">        HREF,</span>
+<span class="fc" id="L167">        ID,</span>
+<span class="fc" id="L168">        NAME;</span>
+
+        public static Mode fromString(final String name) {
+<span class="fc" id="L171">            String upper = name.toUpperCase();</span>
+<span class="fc bfc" id="L172" title="All 2 branches covered.">            for (Mode mode : values()) {</span>
+<span class="fc bfc" id="L173" title="All 2 branches covered.">                if (mode.name().equals(upper)) {</span>
+<span class="fc" id="L174">                    return mode;</span>
+                }
+            }
+<span class="fc" id="L177">            throw new IllegalArgumentException(&quot;There is no Mode name '&quot; + name + &quot;'&quot;);</span>
+        }
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.7.7.201606060606</span></div></body></html>

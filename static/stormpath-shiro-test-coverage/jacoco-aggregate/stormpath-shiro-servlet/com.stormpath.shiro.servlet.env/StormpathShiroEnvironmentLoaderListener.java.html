@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../jacoco-resources/report.gif" type="image/gif"/><title>StormpathShiroEnvironmentLoaderListener.java</title><link rel="stylesheet" href="../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../index.html" class="el_report">Stormpath Shiro :: Test Coverage</a> &gt; <a href="../index.html" class="el_bundle">stormpath-shiro-servlet</a> &gt; <a href="index.source.html" class="el_package">com.stormpath.shiro.servlet.env</a> &gt; <span class="el_source">StormpathShiroEnvironmentLoaderListener.java</span></div><h1>StormpathShiroEnvironmentLoaderListener.java</h1><pre class="source lang-java linenums">package com.stormpath.shiro.servlet.env;
+
+import org.apache.shiro.util.StringUtils;
+import org.apache.shiro.web.env.EnvironmentLoader;
+import org.apache.shiro.web.env.EnvironmentLoaderListener;
+import org.apache.shiro.web.env.WebEnvironment;
+
+import javax.servlet.ServletContextEvent;
+import javax.servlet.ServletContextListener;
+
+/**
+ * Bootstrap listener to startup and shutdown the web application's Shiro
+ * {@link WebEnvironment} at ServletContext startup and shutdown respectively.  This class exists only to
+ * implement the {@link ServletContextListener} interface. All 'real' logic is done in the parent
+ * {@link EnvironmentLoader} class.
+ * &lt;h2&gt;Usage&lt;/h2&gt;
+ * Define the following in {@code web.xml}:
+ * &lt;pre&gt;
+ * &amp;lt;listener&amp;gt;
+ *     &amp;lt;listener-class&amp;gt;&lt;code&gt;com.stormpath.shiro.web.servlet.env.StormpathShiroEnvironmentLoaderListener&lt;/code&gt;&amp;lt;/listener-class&amp;gt;
+ * &amp;lt;/listener&amp;gt;
+ * &lt;/pre&gt;
+ * Configuration options, such as the {@code WebEnvironment} class to instantiate as well as Shiro configuration
+ * resource locations are specified as {@code ServletContext} {@code context-param}s and are documented in the
+ * {@link EnvironmentLoader} JavaDoc.
+ * &lt;h2&gt;Shiro Filter&lt;/h2&gt;
+ * This listener is almost always defined in conjunction with the
+ * {@link org.apache.shiro.web.servlet.ShiroFilter ShiroFilter} to ensure security operations for web requests.  Please
+ * see the {@link org.apache.shiro.web.servlet.ShiroFilter ShiroFilter} JavaDoc for more.
+ * &lt;BR/&gt;&lt;BR/&gt;
+ * In addition this {@link ServletContextListener} will set the default Shiro environment class to {@link StormpathShiroIniEnvironment}
+ * if the &lt;code&gt;shiroEnvironmentClass&lt;/code&gt; init parameter is not set.
+ *
+ * @see EnvironmentLoader
+ * @see org.apache.shiro.web.servlet.ShiroFilter ShiroFilter
+ * @see com.stormpath.sdk.servlet.filter.StormpathFilter
+ */
+<span class="nc" id="L38">public class StormpathShiroEnvironmentLoaderListener extends EnvironmentLoaderListener {</span>
+
+    @Override
+    public void contextInitialized(ServletContextEvent sce) {
+
+<span class="nc" id="L43">        String environmentClassParam = sce.getServletContext().getInitParameter(EnvironmentLoader.ENVIRONMENT_CLASS_PARAM);</span>
+<span class="nc bnc" id="L44" title="All 2 branches missed.">        if (!StringUtils.hasText(environmentClassParam)) {</span>
+<span class="nc" id="L45">            sce.getServletContext().setInitParameter(EnvironmentLoader.ENVIRONMENT_CLASS_PARAM, StormpathShiroIniEnvironment.class.getName());</span>
+        }
+
+<span class="nc" id="L48">        super.contextInitialized(sce);</span>
+<span class="nc" id="L49">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.7.7.201606060606</span></div></body></html>

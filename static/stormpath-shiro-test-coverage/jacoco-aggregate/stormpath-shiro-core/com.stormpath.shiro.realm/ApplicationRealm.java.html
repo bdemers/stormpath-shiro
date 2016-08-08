@@ -1,0 +1,537 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../jacoco-resources/report.gif" type="image/gif"/><title>ApplicationRealm.java</title><link rel="stylesheet" href="../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../index.html" class="el_report">Stormpath Shiro :: Test Coverage</a> &gt; <a href="../index.html" class="el_bundle">stormpath-shiro-core</a> &gt; <a href="index.source.html" class="el_package">com.stormpath.shiro.realm</a> &gt; <span class="el_source">ApplicationRealm.java</span></div><h1>ApplicationRealm.java</h1><pre class="source lang-java linenums">/*
+ * Copyright 2014 Stormpath, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package com.stormpath.shiro.realm;
+
+import com.stormpath.sdk.account.Account;
+import com.stormpath.sdk.application.Application;
+import com.stormpath.sdk.authc.AuthenticationRequest;
+import com.stormpath.sdk.client.Client;
+import com.stormpath.sdk.group.Group;
+import com.stormpath.sdk.group.GroupList;
+import com.stormpath.sdk.impl.authc.DefaultUsernamePasswordRequest;
+import com.stormpath.sdk.resource.ResourceException;
+import org.apache.shiro.authc.AuthenticationException;
+import org.apache.shiro.authc.AuthenticationInfo;
+import org.apache.shiro.authc.AuthenticationToken;
+import org.apache.shiro.authc.SimpleAuthenticationInfo;
+import org.apache.shiro.authc.UsernamePasswordToken;
+import org.apache.shiro.authc.credential.AllowAllCredentialsMatcher;
+import org.apache.shiro.authz.AuthorizationInfo;
+import org.apache.shiro.authz.Permission;
+import org.apache.shiro.authz.SimpleAuthorizationInfo;
+import org.apache.shiro.realm.AuthorizingRealm;
+import org.apache.shiro.subject.PrincipalCollection;
+import org.apache.shiro.subject.SimplePrincipalCollection;
+import org.apache.shiro.util.CollectionUtils;
+import org.apache.shiro.util.StringUtils;
+
+import java.util.*;
+
+/**
+ * A {@code Realm} implementation that uses the &lt;a href=&quot;http://www.stormpath.com&quot;&gt;Stormpath&lt;/a&gt; Cloud Identity
+ * Management service for authentication and authorization operations for a single Application.
+ * &lt;p/&gt;
+ * Your
+ * &lt;a href=&quot;http://docs.stormpath.com/rest/product-guide/#application-url&quot;&gt;application's Stormpath REST URL&lt;/a&gt;
+ * must be configured as the {@code applicationRestUrl} property.
+ * &lt;h3&gt;Authentication&lt;/h3&gt;
+ * Once your application's REST URL is configured, this realm implementation automatically executes authentication
+ * attempts without any need of further configuration by interacting with the Application's
+ * &lt;a href=&quot;http://docs.stormpath.com/rest/product-guide/#application-account-authc&quot;&gt;loginAttempts endpoint&lt;/a&gt;.
+ * &lt;h3&gt;Authorization&lt;/h3&gt;
+ * Stormpath Accounts and Groups can be translated to Shiro roles and permissions via the following components:
+ * &lt;ul&gt;
+ * &lt;li&gt;{@link AccountPermissionResolver AccountPermissionResolver}&lt;/li&gt;
+ * &lt;li&gt;{@link GroupPermissionResolver GroupPermissionResolver}&lt;/li&gt;
+ * &lt;li&gt;{@link GroupRoleResolver GroupRoleResolver}&lt;/li&gt;
+ * &lt;li&gt;{@link AccountRoleResolver AccountRoleResolver}&lt;/li&gt;
+ * &lt;/ul&gt;
+ * &lt;p/&gt;
+ * This realm implementation comes pre-configured with the following default implementations, which should suit most
+ * Shiro+Stormpath use cases:
+ *
+ * &lt;table&gt;
+ *     &lt;tr&gt;
+ *         &lt;th&gt;Property&lt;/th&gt;
+ *         &lt;th&gt;Pre-configured Implementation&lt;/th&gt;
+ *         &lt;th&gt;Notes&lt;/th&gt;
+ *     &lt;/tr&gt;
+ *     &lt;tr&gt;
+ *         &lt;td&gt;{@link #getGroupRoleResolver() groupRoleResolver}&lt;/td&gt;
+ *         &lt;td&gt;{@link DefaultGroupRoleResolver}&lt;/td&gt;
+ *         &lt;td&gt;Each Stormpath Group can be represented as up to three possible Shiro roles (with 1-to-1 being the
+ *         default).  See the {@link DefaultGroupRoleResolver} JavaDoc for more info.&lt;/td&gt;
+ *     &lt;/tr&gt;
+ *     &lt;tr&gt;
+ *         &lt;td&gt;{@link #getAccountRoleResolver() accountRoleResolver}&lt;/td&gt;
+ *         &lt;td&gt;None&lt;/td&gt;
+ *         &lt;td&gt;Most Shiro+Stormpath applications should only need the above {@code DefaultGroupRoleResolver} when using
+ *             Stormpath Groups as Shiro roles.  This realm implementation already acquires the
+ *             {@link com.stormpath.sdk.account.Account#getGroups() account's assigned groups} and resolves the group
+ *             roles via the above {@code groupRoleResolver}.  &lt;b&gt;You only need to configure this property
+ *             if you need an additional way to represent an account's assigned roles that cannot already be
+ *             represented via Stormpath account &amp;lt;--&amp;gt; group associations.&lt;/td&gt;
+ *     &lt;/tr&gt;
+ *     &lt;tr&gt;
+ *         &lt;td&gt;{@link #getGroupPermissionResolver() groupPermissionResolver}&lt;/td&gt;
+ *         &lt;td&gt;{@link GroupCustomDataPermissionResolver}&lt;/td&gt;
+ *         &lt;td&gt;The {@code GroupCustomDataPermissionResolver} assumes the convention that a Group's assigned permissions
+ *         are stored as a nested {@code Set&amp;lt;String&amp;gt;} field in the
+ *         {@link com.stormpath.sdk.group.Group#getCustomData() group's CustomData resource}.  See the
+ *         {@link GroupCustomDataPermissionResolver} JavaDoc for more information.&lt;/td&gt;
+ *     &lt;/tr&gt;
+ *     &lt;tr&gt;
+ *         &lt;td&gt;{@link #getAccountPermissionResolver() accountPermissionResolver}&lt;/td&gt;
+ *         &lt;td&gt;{@link AccountCustomDataPermissionResolver}&lt;/td&gt;
+ *         &lt;td&gt;The {@code AccountCustomDataPermissionResolver} assumes the convention that an Account's directly
+ *         assigned permissions are stored as a nested {@code Set&amp;lt;String&amp;gt;} field in the
+ *         {@link com.stormpath.sdk.account.Account#getCustomData() account's CustomData resource}.  See the
+ *         {@link AccountCustomDataPermissionResolver} JavaDoc for more information.&lt;/td&gt;
+ *     &lt;/tr&gt;
+ * &lt;/table&gt;
+ * &lt;h4&gt;Transitive Permissions&lt;/h4&gt;
+ * This implementation represents an Account's granted permissions as all permissions that:
+ * &lt;ol&gt;
+ *     &lt;li&gt;Are assigned directly to the Account itself&lt;/li&gt;
+ *     &lt;li&gt;Are assigned to any of the Account's assigned Groups&lt;/li&gt;
+ * &lt;/ol&gt;
+ * &lt;h4&gt;Assigning Permissions&lt;/h4&gt;
+ * A Shiro Realm is a read-only component - it typically does not support account/group/permission updates directly.
+ * Therefore, you make modifications to these components by interacting with the data store (e.g. Stormpath) directly.
+ * &lt;p/&gt;
+ * The {@link com.stormpath.shiro.authz.CustomDataPermissionsEditor CustomDataPermissionsEditor} has been provided for
+ * this purpose.  For example, assuming the convention of storing permissions in an account or group's CustomData
+ * resource:
+ * &lt;pre&gt;
+ * Account account = getAccount();
+ * new CustomDataPermissionsEditor(account.getCustomData())
+ *     .append(&quot;someResourceType:anIdentifier:anAction&quot;)
+ *     .append(&quot;anotherResourceType:anIdentifier:*&quot;)
+ *     .remove(&quot;oldPermission&quot;);
+ * account.save();
+ * &lt;/pre&gt;
+ * Again, the default {@link #getGroupPermissionResolver() groupPermissionResolver} and
+ * {@link #getAccountPermissionResolver() accountPermissionResolver} instances assume this CustomData storage strategy,
+ * so if you use them, the above {@code CustomDataPermissionsEditor} will work easily.
+ *
+ * @see AccountPermissionResolver
+ * @see GroupPermissionResolver
+ * @see GroupRoleResolver
+ * @see AccountRoleResolver
+ * @since 0.1
+ */
+public class ApplicationRealm extends AuthorizingRealm {
+
+    private Client client;
+    private String applicationRestUrl;
+    private GroupRoleResolver groupRoleResolver;
+    private GroupPermissionResolver groupPermissionResolver;
+    private AccountPermissionResolver accountPermissionResolver;
+    private AccountRoleResolver accountRoleResolver;
+
+    private Application application; //acquired via the client at runtime, not configurable by the Realm user
+
+<span class="fc" id="L147">    public ApplicationRealm() {</span>
+        //Stormpath authenticates user accounts directly, no need to perform that here in Shiro:
+<span class="fc" id="L149">        setCredentialsMatcher(new AllowAllCredentialsMatcher());</span>
+<span class="fc" id="L150">        setGroupRoleResolver(new DefaultGroupRoleResolver());</span>
+<span class="fc" id="L151">        setGroupPermissionResolver(new GroupCustomDataPermissionResolver());</span>
+<span class="fc" id="L152">        setAccountPermissionResolver(new AccountCustomDataPermissionResolver());</span>
+<span class="fc" id="L153">    }</span>
+
+    /**
+     * Returns the {@code Client} instance used to communicate with Stormpath's REST API.
+     *
+     * @return the {@code Client} instance used to communicate with Stormpath's REST API.
+     */
+    public Client getClient() {
+<span class="fc" id="L161">        return client;</span>
+    }
+
+    /**
+     * Sets the {@code Client} instance used to communicate with Stormpath's REST API.
+     *
+     * @param client the {@code Client} instance used to communicate with Stormpath's REST API.
+     */
+    public void setClient(Client client) {
+<span class="fc" id="L170">        this.client = client;</span>
+<span class="fc" id="L171">    }</span>
+
+    /**
+     * Returns the Stormpath REST URL of the specific application communicating with Stormpath.
+     * &lt;p/&gt;
+     * Any application supported by Stormpath will have a
+     * &lt;a href=&quot;http://www.stormpath.com/docs/quickstart/authenticate-account&quot;&gt;dedicated unique REST URL&lt;/a&gt;.  The
+     * Stormpath REST URL of the Shiro-enabled application communicating with Stormpath via this Realm must be
+     * configured by this property.
+     *
+     * @return the Stormpath REST URL of the specific application communicating with Stormpath.
+     */
+    public String getApplicationRestUrl() {
+<span class="fc" id="L184">        return applicationRestUrl;</span>
+    }
+
+    /**
+     * Sets the Stormpath REST URL of the specific application communicating with Stormpath.
+     * &lt;p/&gt;
+     * Any application supported by Stormpath will have a
+     * &lt;a href=&quot;http://www.stormpath.com/docs/quickstart/authenticate-account&quot;&gt;dedicated unique REST URL&lt;/a&gt;.  The
+     * Stormpath REST URL of the Shiro-enabled application communicating with Stormpath via this Realm must be
+     * configured by this property.
+     *
+     * @param applicationRestUrl the Stormpath REST URL of the specific application communicating with Stormpath.
+     */
+    public void setApplicationRestUrl(String applicationRestUrl) {
+<span class="fc" id="L198">        this.applicationRestUrl = applicationRestUrl;</span>
+<span class="fc" id="L199">    }</span>
+
+    /**
+     * Returns the {@link GroupRoleResolver} used to translate Stormpath Groups into Shiro role names.
+     * Unless overridden via {@link #setGroupRoleResolver(GroupRoleResolver) setGroupRoleResolver},
+     * the default instance is a {@link DefaultGroupRoleResolver}.
+     *
+     * @return the {@link GroupRoleResolver} used to translate Stormpath Groups into Shiro role names.
+     * @since 0.2
+     */
+    public GroupRoleResolver getGroupRoleResolver() {
+<span class="fc" id="L210">        return groupRoleResolver;</span>
+    }
+
+    /**
+     * Sets the {@link GroupRoleResolver} used to translate Stormpath Groups into Shiro role names.
+     * Unless overridden, the default instance is a {@link DefaultGroupRoleResolver}.
+     *
+     * @param groupRoleResolver the {@link GroupRoleResolver} used to translate Stormpath Groups into Shiro role names.
+     * @since 0.2
+     */
+    public void setGroupRoleResolver(GroupRoleResolver groupRoleResolver) {
+<span class="fc" id="L221">        this.groupRoleResolver = groupRoleResolver;</span>
+<span class="fc" id="L222">    }</span>
+
+    /**
+     * Returns the {@link GroupPermissionResolver} used to discover a Stormpath Groups' assigned permissions.  Unless
+     * overridden via {@link #setGroupPermissionResolver(GroupPermissionResolver) setGroupPermissionResolver}, the
+     * default instance is a {@link GroupCustomDataPermissionResolver}.
+     *
+     * @return the {@link GroupPermissionResolver} used to discover a Stormpath Groups' assigned permissions
+     * @since 0.2
+     */
+    public GroupPermissionResolver getGroupPermissionResolver() {
+<span class="fc" id="L233">        return groupPermissionResolver;</span>
+    }
+
+    /**
+     * Sets the {@link GroupPermissionResolver} used to discover a Stormpath Groups' assigned permissions.  Unless
+     * overridden, the default instance is a {@link GroupCustomDataPermissionResolver}.
+     *
+     * @param groupPermissionResolver the {@link GroupPermissionResolver} used to discover a Stormpath Groups' assigned
+     *                                permissions
+     * @since 0.2
+     */
+    public void setGroupPermissionResolver(GroupPermissionResolver groupPermissionResolver) {
+<span class="fc" id="L245">        this.groupPermissionResolver = groupPermissionResolver;</span>
+<span class="fc" id="L246">    }</span>
+
+    /**
+     * Returns the {@link AccountPermissionResolver} used to discover a Stormpath Account's directly-assigned
+     * permissions.  Unless overridden via
+     * {@link #setAccountPermissionResolver(AccountPermissionResolver) setAccountPermissionResolver}, the default
+     * instance is a {@link AccountCustomDataPermissionResolver}.
+     *
+     * @return the {@link AccountPermissionResolver} used to discover a Stormpath Account's assigned permissions.
+     * @since 0.3
+     */
+    public AccountPermissionResolver getAccountPermissionResolver() {
+<span class="fc" id="L258">        return accountPermissionResolver;</span>
+    }
+
+    /**
+     * Sets the {@link AccountPermissionResolver} used to discover a Stormpath Account's assigned permissions.  Unless
+     * overridden, the default instance is a {@link AccountCustomDataPermissionResolver}.
+     *
+     * @param accountPermissionResolver the {@link AccountPermissionResolver} used to discover a Stormpath Account's
+     *                                  assigned permissions
+     * @since 0.3
+     */
+    public void setAccountPermissionResolver(AccountPermissionResolver accountPermissionResolver) {
+<span class="fc" id="L270">        this.accountPermissionResolver = accountPermissionResolver;</span>
+<span class="fc" id="L271">    }</span>
+
+    /**
+     * Returns the {@link AccountRoleResolver} used to resolve a Stormpath Account into Shiro role names.  This is
+     * {@code null} by default.
+     * &lt;p/&gt;
+     * &lt;b&gt;You only need to configure this property if you are &lt;em&gt;not&lt;/em&gt; using Stormpath Groups as Shiro Roles.&lt;/b&gt;&lt;br/&gt;
+     * Stormpath Account resources are usually associated with one or more Stormpath Groups and those Groups can be
+     * represented as Shiro roles by using the {@link #getGroupRoleResolver() groupRoleResolver}.  You only need this
+     * component to represent Account Roles that are not already represented as Stormpath Groups via the
+     * {@code groupRoleResolver}.
+     *
+     * @return the {@link AccountRoleResolver} used to resolve a Stormpath Account into Shiro role names.
+     * @since 0.2
+     */
+    public AccountRoleResolver getAccountRoleResolver() {
+<span class="fc" id="L287">        return accountRoleResolver;</span>
+    }
+
+    /**
+     * Sets the {@link AccountRoleResolver} used to resolve a Stormpath Account into Shiro role names.  This is
+     * {@code null} by default.
+     * &lt;p/&gt;
+     * &lt;b&gt;You only need to configure this property if you are &lt;em&gt;not&lt;/em&gt; using Stormpath Groups as Shiro Roles.&lt;/b&gt;&lt;br/&gt;
+     * Stormpath Account resources are usually associated with one or more Stormpath Groups and those Groups can be
+     * represented as Shiro roles by using the {@link #getGroupRoleResolver() groupRoleResolver}.  You only need this
+     * component to represent Account Roles that are not already represented as Stormpath Groups via the
+     * {@code groupRoleResolver}.
+     *
+     * @param accountRoleResolver the {@link AccountRoleResolver} used to resolve a Stormpath Account into Shiro
+     *                            role names.
+     * @since 0.2
+     */
+    public void setAccountRoleResolver(AccountRoleResolver accountRoleResolver) {
+<span class="fc" id="L305">        this.accountRoleResolver = accountRoleResolver;</span>
+<span class="fc" id="L306">    }</span>
+
+    @Override
+    protected void onInit() {
+<span class="fc" id="L310">        super.onInit();</span>
+<span class="fc" id="L311">        assertState();</span>
+<span class="fc" id="L312">    }</span>
+
+    private void assertState() {
+<span class="fc bfc" id="L315" title="All 2 branches covered.">        if (this.client == null) {</span>
+<span class="fc" id="L316">            throw new IllegalStateException(&quot;Stormpath SDK Client instance must be configured.&quot;);</span>
+        }
+<span class="fc bfc" id="L318" title="All 2 branches covered.">        if (this.applicationRestUrl == null) {</span>
+<span class="fc" id="L319">            throw new IllegalStateException(&quot;\n\nThis application's Stormpath REST URL must be configured.\n\n  &quot; +</span>
+                    &quot;You may get your application's Stormpath REST URL as shown here:\n\n &quot; +
+                    &quot;http://www.stormpath.com/docs/application-rest-url\n\n&quot; +
+                    &quot;Copy and paste the 'REST URL' value as the 'applicationRestUrl' property of this class.&quot;);
+        }
+<span class="fc" id="L324">    }</span>
+
+    //this is not thread safe, but the Client is, and this is only executed during initial Application
+    //acquisition, so it is negligible if this executes a few times instead of just once.
+    protected final Application ensureApplicationReference() {
+<span class="pc bpc" id="L329" title="1 of 2 branches missed.">        if (this.application == null) {</span>
+<span class="fc" id="L330">            assertState();</span>
+<span class="fc" id="L331">            String href = getApplicationRestUrl();</span>
+<span class="fc" id="L332">            this.application = client.getDataStore().getResource(href, Application.class);</span>
+        }
+<span class="fc" id="L334">        return this.application;</span>
+    }
+
+    @Override
+    protected AuthenticationInfo doGetAuthenticationInfo(AuthenticationToken authcToken) throws AuthenticationException {
+
+<span class="fc" id="L340">        assertState();</span>
+
+<span class="fc" id="L342">        UsernamePasswordToken token = (UsernamePasswordToken) authcToken;</span>
+
+<span class="fc" id="L344">        AuthenticationRequest request = createAuthenticationRequest(token);</span>
+
+<span class="fc" id="L346">        Application application = ensureApplicationReference();</span>
+
+        Account account;
+
+        try {
+<span class="fc" id="L351">            account = application.authenticateAccount(request).getAccount();</span>
+<span class="fc" id="L352">        } catch (ResourceException e) {</span>
+            //todo error code translation to throw more detailed exceptions
+<span class="fc" id="L354">            String msg = StringUtils.clean(e.getMessage());</span>
+<span class="pc bpc" id="L355" title="1 of 2 branches missed.">            if (msg == null) {</span>
+<span class="nc" id="L356">                msg = StringUtils.clean(e.getDeveloperMessage());</span>
+            }
+<span class="pc bpc" id="L358" title="1 of 2 branches missed.">            if (msg == null) {</span>
+<span class="nc" id="L359">                msg = &quot;Invalid login or password.&quot;;</span>
+            }
+<span class="fc" id="L361">            throw new AuthenticationException(msg, e);</span>
+<span class="fc" id="L362">        }</span>
+
+        PrincipalCollection principals;
+
+        try {
+<span class="fc" id="L367">            principals = createPrincipals(account);</span>
+<span class="nc" id="L368">        } catch (Exception e) {</span>
+<span class="nc" id="L369">            throw new AuthenticationException(&quot;Unable to obtain authenticated account properties.&quot;, e);</span>
+<span class="fc" id="L370">        }</span>
+
+<span class="fc" id="L372">        return new SimpleAuthenticationInfo(principals, null);</span>
+    }
+
+    protected AuthenticationRequest createAuthenticationRequest(UsernamePasswordToken token) {
+<span class="fc" id="L376">        String username = token.getUsername();</span>
+<span class="fc" id="L377">        char[] password = token.getPassword();</span>
+<span class="fc" id="L378">        String host = token.getHost();</span>
+
+<span class="fc" id="L380">        DefaultUsernamePasswordRequest usernamePasswordRequest = new DefaultUsernamePasswordRequest(username, password);</span>
+
+<span class="pc bpc" id="L382" title="1 of 2 branches missed.">        if (host != null) {</span>
+<span class="fc" id="L383">            usernamePasswordRequest.setHost(host);</span>
+        }
+
+<span class="fc" id="L386">        return usernamePasswordRequest;</span>
+    }
+
+    protected PrincipalCollection createPrincipals(Account account) {
+
+<span class="fc" id="L391">        LinkedHashMap&lt;String, String&gt; props = new LinkedHashMap&lt;String, String&gt;();</span>
+
+<span class="fc" id="L393">        props.put(&quot;href&quot;, account.getHref());</span>
+<span class="fc" id="L394">        nullSafePut(props, &quot;username&quot;, account.getUsername());</span>
+<span class="fc" id="L395">        nullSafePut(props, &quot;email&quot;, account.getEmail());</span>
+<span class="fc" id="L396">        nullSafePut(props, &quot;givenName&quot;, account.getGivenName());</span>
+<span class="fc" id="L397">        nullSafePut(props, &quot;middleName&quot;, account.getMiddleName());</span>
+<span class="fc" id="L398">        nullSafePut(props, &quot;surname&quot;, account.getSurname());</span>
+
+<span class="fc" id="L400">        Collection&lt;Object&gt; principals = new ArrayList&lt;Object&gt;(2);</span>
+<span class="fc" id="L401">        principals.add(account.getHref());</span>
+<span class="fc" id="L402">        principals.add(props);</span>
+
+<span class="fc" id="L404">        return new SimplePrincipalCollection(principals, getName());</span>
+    }
+
+    private void nullSafePut(Map&lt;String, String&gt; props, String propName, String value) {
+<span class="fc" id="L408">        value = StringUtils.clean(value);</span>
+<span class="pc bpc" id="L409" title="1 of 2 branches missed.">        if (value != null) {</span>
+<span class="fc" id="L410">            props.put(propName, value);</span>
+        }
+<span class="fc" id="L412">    }</span>
+
+    protected String getAccountHref(PrincipalCollection principals) {
+<span class="nc" id="L415">        Collection c = principals.fromRealm(getName());</span>
+        //Based on the createPrincipals implementation above, the first one is the Account href:
+<span class="nc" id="L417">        return (String) c.iterator().next();</span>
+    }
+
+    @Override
+    protected AuthorizationInfo doGetAuthorizationInfo(PrincipalCollection principals) {
+
+<span class="nc" id="L423">        assertState();</span>
+
+<span class="nc" id="L425">        SimpleAuthorizationInfo info = new SimpleAuthorizationInfo();</span>
+
+<span class="nc" id="L427">        String href = getAccountHref(principals);</span>
+
+        //TODO resource expansion (account + groups in one request instead of two):
+<span class="nc" id="L430">        Account account = getClient().getDataStore().getResource(href, Account.class);</span>
+
+<span class="nc" id="L432">        GroupList groups = account.getGroups();</span>
+
+<span class="nc bnc" id="L434" title="All 2 branches missed.">        for (Group group : groups) {</span>
+<span class="nc" id="L435">            Set&lt;String&gt; groupRoles = resolveRoles(group);</span>
+<span class="nc bnc" id="L436" title="All 2 branches missed.">            for (String roleName : groupRoles) {</span>
+<span class="nc" id="L437">                info.addRole(roleName);</span>
+<span class="nc" id="L438">            }</span>
+
+<span class="nc" id="L440">            Set&lt;Permission&gt; permissions = resolvePermissions(group);</span>
+<span class="nc bnc" id="L441" title="All 2 branches missed.">            for (Permission permission : permissions) {</span>
+<span class="nc" id="L442">                info.addObjectPermission(permission);</span>
+<span class="nc" id="L443">            }</span>
+<span class="nc" id="L444">        }</span>
+
+        //since 0.3:
+<span class="nc" id="L447">        Set&lt;String&gt; accountRoles = resolveRoles(account);</span>
+<span class="nc bnc" id="L448" title="All 2 branches missed.">        for (String roleName : accountRoles) {</span>
+<span class="nc" id="L449">            info.addRole(roleName);</span>
+<span class="nc" id="L450">        }</span>
+
+        //since 0.3:
+<span class="nc" id="L453">        Set&lt;Permission&gt; accountPermissions = resolvePermissions(account);</span>
+<span class="nc bnc" id="L454" title="All 2 branches missed.">        for (Permission permission : accountPermissions) {</span>
+<span class="nc" id="L455">            info.addObjectPermission(permission);</span>
+<span class="nc" id="L456">        }</span>
+
+<span class="nc bnc" id="L458" title="All 2 branches missed.">        if (CollectionUtils.isEmpty(info.getRoles()) &amp;&amp;</span>
+<span class="nc bnc" id="L459" title="All 2 branches missed.">                CollectionUtils.isEmpty(info.getObjectPermissions()) &amp;&amp;</span>
+<span class="nc bnc" id="L460" title="All 2 branches missed.">                CollectionUtils.isEmpty(info.getStringPermissions())) {</span>
+            //no authorization data associated with the Account
+<span class="nc" id="L462">            return null;</span>
+        }
+
+<span class="nc" id="L465">        return info;</span>
+    }
+
+    //since 0.3
+    private Set&lt;Permission&gt; resolvePermissions(Account account) {
+<span class="nc bnc" id="L470" title="All 2 branches missed.">        if (accountPermissionResolver != null) {</span>
+<span class="nc" id="L471">            return accountPermissionResolver.resolvePermissions(account);</span>
+        }
+<span class="nc" id="L473">        return Collections.emptySet();</span>
+    }
+
+    private Set&lt;Permission&gt; resolvePermissions(Group group) {
+<span class="nc bnc" id="L477" title="All 2 branches missed.">        if (groupPermissionResolver != null) {</span>
+<span class="nc" id="L478">            return groupPermissionResolver.resolvePermissions(group);</span>
+        }
+<span class="nc" id="L480">        return Collections.emptySet();</span>
+    }
+
+    private Set&lt;String&gt; resolveRoles(Group group) {
+<span class="nc bnc" id="L484" title="All 2 branches missed.">        if (groupRoleResolver != null) {</span>
+<span class="nc" id="L485">            return groupRoleResolver.resolveRoles(group);</span>
+        }
+<span class="nc" id="L487">        return Collections.emptySet();</span>
+    }
+
+    //since 0.3
+    private Set&lt;String&gt; resolveRoles(Account account) {
+<span class="nc bnc" id="L492" title="All 2 branches missed.">        if (accountRoleResolver != null) {</span>
+<span class="nc" id="L493">            return accountRoleResolver.resolveRoles(account);</span>
+        }
+<span class="nc" id="L495">        return Collections.emptySet();</span>
+    }
+
+    /**
+     * If authentication caching is enabled, authentication data for an account must be evicted (removed) from the cached during logout.
+     * &lt;p/&gt;
+     * Since the user submitted username is different to the the primary account identifier (i.e. username for the former, account href for the latter),
+     * we need to overwrite the {@link org.apache.shiro.realm.AuthenticatingRealm#getAuthenticationCacheKey(org.apache.shiro.subject.PrincipalCollection)
+     * AuthenticatingRealm#getAuthenticationCacheKey(PrincipalCollection)}.
+     * &lt;p/&gt;
+     * This guarantees that the same cache key used to cache the data during authentication (derived from the AuthenticationToken)
+     * will be used to remove the cached data during logout (derived from the PrincipalCollection).
+     * &lt;p/&gt;
+     * This is a fix for &lt;a href=&quot;https://github.com/stormpath/stormpath-shiro/issues/6&quot;&gt;Issue #6&lt;/a&gt;.
+     *
+     * @param principals the collection of all principals associated with the current subject.
+     * @return the key used to store the authentication information in the cache (i.e. Stormpath's {@link Account} email)
+     * @since 0.6.0
+     */
+    protected Object getAuthenticationCacheKey(PrincipalCollection principals) {
+<span class="fc bfc" id="L515" title="All 2 branches covered.">        if (!CollectionUtils.isEmpty(principals)) {</span>
+<span class="fc" id="L516">            Collection thisPrincipals = principals.fromRealm(getName());</span>
+<span class="fc bfc" id="L517" title="All 2 branches covered.">            if (!CollectionUtils.isEmpty(thisPrincipals)) {</span>
+<span class="fc" id="L518">                Iterator iterator = thisPrincipals.iterator();</span>
+<span class="fc" id="L519">                iterator.next(); //First item is the Stormpath' account href</span>
+                //Second item is Stormpath' account map
+<span class="fc" id="L521">                Map&lt;String, Object&gt; accountInfo = (Map&lt;String, Object&gt;) iterator.next();</span>
+                //Users can indistinctively login using their emails or usernames. Therefore, we need to try which is
+                //the key used in each case
+<span class="fc" id="L524">                String email = (String) accountInfo.get(&quot;email&quot;);</span>
+<span class="fc bfc" id="L525" title="All 2 branches covered.">                if (getAuthenticationCache().get(email) != null) {</span>
+<span class="fc" id="L526">                    return email;</span>
+                }
+<span class="fc" id="L528">                return accountInfo.get(&quot;username&quot;);</span>
+            } else {
+                //no principals attributed to this particular realm.  Fall back to the 'master' primary:
+<span class="fc" id="L531">                return principals.getPrimaryPrincipal();</span>
+            }
+        }
+<span class="fc" id="L534">        return null;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.7.7.201606060606</span></div></body></html>

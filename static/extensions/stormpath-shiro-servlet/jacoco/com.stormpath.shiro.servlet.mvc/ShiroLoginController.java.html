@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ShiroLoginController.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Stormpath :: Shiro :: Servlet</a> &gt; <a href="index.source.html" class="el_package">com.stormpath.shiro.servlet.mvc</a> &gt; <span class="el_source">ShiroLoginController.java</span></div><h1>ShiroLoginController.java</h1><pre class="source lang-java linenums">package com.stormpath.shiro.servlet.mvc;
+
+import com.stormpath.sdk.servlet.form.Form;
+import com.stormpath.sdk.servlet.mvc.DefaultViewModel;
+import com.stormpath.sdk.servlet.mvc.LoginController;
+import com.stormpath.sdk.servlet.mvc.ViewModel;
+import org.apache.shiro.SecurityUtils;
+import org.apache.shiro.authc.AuthenticationException;
+import org.apache.shiro.authc.AuthenticationToken;
+import org.apache.shiro.authc.UsernamePasswordToken;
+import org.apache.shiro.subject.Subject;
+
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
+/**
+ * A login controller that calls Shiro's Subject.login with the form fields &lt;code&gt;login&lt;/code&gt; and &lt;code&gt;password&lt;/code&gt;.
+ */
+<span class="fc" id="L20">public class ShiroLoginController extends LoginController {</span>
+
+    @Override
+    protected ViewModel onValidSubmit(HttpServletRequest request, HttpServletResponse response, Form form) throws Exception {
+<span class="fc" id="L24">        String usernameOrEmail = form.getFieldValue(&quot;login&quot;);</span>
+<span class="fc" id="L25">        String password = form.getFieldValue(&quot;password&quot;);</span>
+
+<span class="fc" id="L27">        String host = request.getRemoteHost();</span>
+
+<span class="fc" id="L29">        AuthenticationToken token = new UsernamePasswordToken(usernameOrEmail, password, false, host);</span>
+
+        try {
+<span class="fc" id="L32">            Subject subject = SecurityUtils.getSubject();</span>
+<span class="fc" id="L33">            subject.login(token);</span>
+
+<span class="fc" id="L35">            return new DefaultViewModel(getNextUri(request)).setRedirect(true);</span>
+
+<span class="fc" id="L37">        } catch (AuthenticationException e) {</span>
+
+<span class="fc" id="L39">            String msg = &quot;Unable to authenticate account for submitted username [&quot; + usernameOrEmail + &quot;].&quot;;</span>
+<span class="fc" id="L40">            throw new ServletException(msg, e);</span>
+
+        }
+    }
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.7.7.201606060606</span></div></body></html>

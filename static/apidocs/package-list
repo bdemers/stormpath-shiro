@@ -1,0 +1,10 @@
+com.stormpath.shiro.authz
+com.stormpath.shiro.cache
+com.stormpath.shiro.client
+com.stormpath.shiro.config
+com.stormpath.shiro.realm
+com.stormpath.shiro.sdk.servlet.config.impl
+com.stormpath.shiro.servlet.config
+com.stormpath.shiro.servlet.config.filter
+com.stormpath.shiro.servlet.env
+com.stormpath.shiro.servlet.mvc

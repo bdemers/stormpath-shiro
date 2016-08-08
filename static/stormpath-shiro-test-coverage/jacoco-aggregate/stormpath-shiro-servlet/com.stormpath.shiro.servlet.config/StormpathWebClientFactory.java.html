@@ -1,0 +1,154 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../jacoco-resources/report.gif" type="image/gif"/><title>StormpathWebClientFactory.java</title><link rel="stylesheet" href="../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../index.html" class="el_report">Stormpath Shiro :: Test Coverage</a> &gt; <a href="../index.html" class="el_bundle">stormpath-shiro-servlet</a> &gt; <a href="index.source.html" class="el_package">com.stormpath.shiro.servlet.config</a> &gt; <span class="el_source">StormpathWebClientFactory.java</span></div><h1>StormpathWebClientFactory.java</h1><pre class="source lang-java linenums">package com.stormpath.shiro.servlet.config;
+
+import com.stormpath.sdk.api.ApiKey;
+import com.stormpath.sdk.api.ApiKeyBuilder;
+import com.stormpath.sdk.api.ApiKeys;
+import com.stormpath.sdk.client.Client;
+import com.stormpath.sdk.client.ClientBuilder;
+import com.stormpath.sdk.lang.Strings;
+import com.stormpath.sdk.servlet.client.DefaultServletContextClientFactory;
+import com.stormpath.sdk.servlet.config.Config;
+import com.stormpath.shiro.cache.ShiroCacheManager;
+import com.stormpath.shiro.config.ClientFactory;
+import org.apache.shiro.cache.CacheManager;
+import org.apache.shiro.util.AbstractFactory;
+
+import javax.servlet.ServletContext;
+
+/**
+ * A simple bridge component that allows a Stormpath SDK Client to be created via Shiro's
+ * {@link org.apache.shiro.util.Factory Factory} concept.
+ * &lt;p/&gt;
+ * As this class is a simple bridge between APIs, it does not do much - all configuration properties are
+ * passed through to an internal {@link DefaultServletContextClientFactory} instance, and the
+ * {@link #createInstance()} implementation merely calls {@link DefaultServletContextClientFactory#createClient(ServletContext)}()}.
+ * &lt;h5&gt;Usage&lt;/h5&gt;
+ * Example {@code shiro.ini} configuration:
+ * &lt;p/&gt;
+ * &lt;pre&gt;
+ * [main]
+ * ...
+ * cacheManager = some.impl.of.org.apache.shiro.cache.CacheManager
+ * securityManager.cacheManager = $cacheManager
+ *
+ * stormpathClient = com.stormpath.shiro.client.ClientFactory
+ * stormpathClient.apiKeyFileLocation = /home/myhomedir/.stormpath/apiKey.properties
+ * stormpathClient.cacheManager = $cacheManager
+ *
+ * stormpathRealm = com.stormpath.shiro.realm.ApplicationRealm
+ * stormpathRealm.client = $stormpathClient
+ * stormpathRealm.applicationRestUrl = https://api.stormpath.com/v1/applications/yourAppIdHere
+ *
+ * securityManager.realm = $stormpathRealm
+ *
+ * ...
+ * &lt;/pre&gt;
+ *
+ *
+ * TODO: move most of these bits into stormpath-shiro-core
+ *
+ */
+public class StormpathWebClientFactory extends AbstractFactory&lt;Client&gt; implements ClientFactory {
+
+<span class="fc" id="L53">    private CacheManager cacheManager = null;</span>
+<span class="fc" id="L54">    private String apiKeyFileLocation = null;</span>
+
+<span class="fc" id="L56">    private String baseUrl = null;</span>
+<span class="fc" id="L57">    private String apiKeyId = null;</span>
+<span class="fc" id="L58">    private String apiKeySecret = null;</span>
+
+
+
+    private ServletContext servletContext;
+
+<span class="fc" id="L64">    public StormpathWebClientFactory(ServletContext servletContext) {</span>
+<span class="fc" id="L65">        this.servletContext = servletContext;</span>
+<span class="fc" id="L66">    }</span>
+
+    @Override
+    public void setBaseUrl(String baseUrl) {
+<span class="fc" id="L70">        this.baseUrl = baseUrl;</span>
+<span class="fc" id="L71">    }</span>
+
+    @Override
+    public void setApiKeyFileLocation(String apiKeyFileLocation) {
+<span class="fc" id="L75">        this.apiKeyFileLocation = apiKeyFileLocation;</span>
+<span class="fc" id="L76">    }</span>
+
+    @Override
+    public void setApiKeyId(String apiKeyId) {
+<span class="fc" id="L80">        this.apiKeyId = apiKeyId;</span>
+<span class="fc" id="L81">    }</span>
+
+    @Override
+    public void setApiKeySecret(String apiKeySecret) {
+<span class="fc" id="L85">        this.apiKeySecret = apiKeySecret;</span>
+<span class="fc" id="L86">    }</span>
+
+    @Override
+    public void setCacheManager(CacheManager cacheManager) {
+<span class="fc" id="L90">        this.cacheManager = cacheManager;</span>
+<span class="fc" id="L91">    }</span>
+
+    @Override
+    protected Client createInstance() {
+<span class="fc" id="L95">        return new ShiroBridgeServletContextClientFactory().createClient(servletContext);</span>
+    }
+
+
+    /**
+     * Wrapper around DefaultServletContextClientFactory, that allows overriding of the &lt;code&gt;baseUrl&lt;/code&gt;, api key
+     * (&lt;code&gt;id&lt;/code&gt;, &lt;code&gt;secret&lt;/code&gt;, &lt;code&gt;fileLocation&lt;/code&gt;) and &lt;code&gt;cacheManager&lt;/code&gt;.
+     */
+<span class="fc" id="L103">    private class ShiroBridgeServletContextClientFactory extends DefaultServletContextClientFactory {</span>
+
+
+        @Override
+        protected void applyBaseUrl(ClientBuilder builder) {
+<span class="fc bfc" id="L108" title="All 2 branches covered.">            if (Strings.hasText(baseUrl)) {</span>
+<span class="fc" id="L109">                builder.setBaseUrl(baseUrl);</span>
+            }
+            else {
+<span class="fc" id="L112">                super.applyBaseUrl(builder);</span>
+            }
+<span class="fc" id="L114">        }</span>
+
+        @Override
+        protected ApiKey createApiKey() {
+
+<span class="fc" id="L119">            ApiKeyBuilder apiKeyBuilder = ApiKeys.builder();</span>
+<span class="fc" id="L120">            Config config = getConfig();</span>
+
+<span class="fc bfc" id="L122" title="All 2 branches covered.">            String value = apiKeyId != null ? apiKeyId : config.get(&quot;stormpath.client.apiKey.id&quot;);</span>
+<span class="fc bfc" id="L123" title="All 2 branches covered.">            if (Strings.hasText(value)) {</span>
+<span class="fc" id="L124">                apiKeyBuilder.setId(value);</span>
+            }
+
+            //check for API Key ID embedded in the properties configuration
+<span class="fc bfc" id="L128" title="All 2 branches covered.">            value = apiKeySecret != null ? apiKeySecret : config.get(&quot;stormpath.client.apiKey.secret&quot;);</span>
+<span class="fc bfc" id="L129" title="All 2 branches covered.">            if (Strings.hasText(value)) {</span>
+<span class="fc" id="L130">                apiKeyBuilder.setSecret(value);</span>
+            }
+
+<span class="fc bfc" id="L133" title="All 2 branches covered.">            value = apiKeyFileLocation != null ? apiKeyFileLocation : config.get(STORMPATH_API_KEY_FILE);</span>
+<span class="fc bfc" id="L134" title="All 2 branches covered.">            if (Strings.hasText(value)) {</span>
+<span class="fc" id="L135">                apiKeyBuilder.setFileLocation(value);</span>
+            }
+
+<span class="fc" id="L138">            return apiKeyBuilder.build();</span>
+        }
+
+        @Override
+        protected void applyCacheManager(ClientBuilder builder) {
+
+<span class="fc bfc" id="L144" title="All 2 branches covered.">            if (cacheManager != null) {</span>
+<span class="fc" id="L145">                com.stormpath.sdk.cache.CacheManager stormpathCacheManager = new ShiroCacheManager(cacheManager);</span>
+<span class="fc" id="L146">                builder.setCacheManager(stormpathCacheManager);</span>
+<span class="fc" id="L147">            }</span>
+            else {
+<span class="fc" id="L149">                super.applyCacheManager(builder);</span>
+            }
+<span class="fc" id="L151">        }</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.7.7.201606060606</span></div></body></html>

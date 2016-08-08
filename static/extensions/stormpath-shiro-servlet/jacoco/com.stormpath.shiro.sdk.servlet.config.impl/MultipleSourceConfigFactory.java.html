@@ -1,0 +1,180 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>MultipleSourceConfigFactory.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Stormpath :: Shiro :: Servlet</a> &gt; <a href="index.source.html" class="el_package">com.stormpath.shiro.sdk.servlet.config.impl</a> &gt; <span class="el_source">MultipleSourceConfigFactory.java</span></div><h1>MultipleSourceConfigFactory.java</h1><pre class="source lang-java linenums">/*
+ * Copyright 2015 Stormpath, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package com.stormpath.shiro.sdk.servlet.config.impl;
+
+import com.stormpath.sdk.impl.config.*;
+import com.stormpath.sdk.impl.io.ClasspathResource;
+import com.stormpath.sdk.impl.io.Resource;
+import com.stormpath.sdk.impl.io.ResourceFactory;
+import com.stormpath.sdk.impl.io.StringResource;
+import com.stormpath.sdk.lang.Strings;
+import com.stormpath.sdk.servlet.config.Config;
+import com.stormpath.sdk.servlet.config.ConfigFactory;
+import com.stormpath.sdk.servlet.config.impl.DefaultConfig;
+import com.stormpath.sdk.servlet.io.ServletContainerResourceFactory;
+
+import javax.servlet.ServletContext;
+import java.util.*;
+
+import static com.stormpath.sdk.servlet.config.impl.DefaultConfigFactory.*;
+
+
+<span class="fc" id="L35">public class MultipleSourceConfigFactory implements ConfigFactory {</span>
+
+    private static final String REQUIRED_TOKEN = &quot;(required)&quot;;
+
+<span class="fc" id="L39">    private static final EnvVarNameConverter envVarNameConverter = new DefaultEnvVarNameConverter();</span>
+
+
+    private static final String NL                                  = &quot;\n&quot;;
+    public static final String INTERNAL_TOKEN                       = &quot;internal&quot;;
+    public static final String DEFAULT_STORMPATH_PROPERTIES_SOURCES =
+                    //MUST always be first:
+                    ClasspathResource.SCHEME_PREFIX + &quot;com/stormpath/sdk/servlet/config/web.&quot; + STORMPATH_PROPERTIES + NL +
+                    ClasspathResource.SCHEME_PREFIX + STORMPATH_PROPERTIES + NL +
+                    &quot;/WEB-INF/stormpath.properties&quot; + NL +
+                    INTERNAL_TOKEN + NL +
+                    CONTEXT_PARAM_TOKEN + NL +
+                    ENVVARS_TOKEN + NL +
+                    SYSPROPS_TOKEN;
+
+    @Override
+    public Config createConfig(ServletContext servletContext) {
+
+<span class="fc" id="L57">        Map&lt;String,String&gt; props = new LinkedHashMap&lt;String, String&gt;();</span>
+
+<span class="fc bfc" id="L59" title="All 2 branches covered.">        for(PropertiesSource source : getPropertySources(servletContext)) {</span>
+<span class="fc" id="L60">            Map&lt;String,String&gt; srcProps = source.getProperties();</span>
+<span class="fc" id="L61">            props.putAll(srcProps);</span>
+<span class="fc" id="L62">        }</span>
+
+<span class="fc" id="L64">        return new DefaultConfig(servletContext, props);</span>
+    }
+
+    protected Collection&lt;PropertiesSource&gt; getPropertySources(ServletContext servletContext) {
+<span class="fc" id="L68">        ResourceFactory resourceFactory = new ServletContainerResourceFactory(servletContext);</span>
+
+<span class="fc" id="L70">        String sourceDefs = servletContext.getInitParameter(STORMPATH_PROPERTIES_SOURCES);</span>
+<span class="pc bpc" id="L71" title="1 of 2 branches missed.">        if (!Strings.hasText(sourceDefs)) {</span>
+<span class="fc" id="L72">            sourceDefs = DEFAULT_STORMPATH_PROPERTIES_SOURCES;</span>
+        }
+
+<span class="fc" id="L75">        Collection&lt;PropertiesSource&gt; sources = new ArrayList&lt;PropertiesSource&gt;();</span>
+
+<span class="fc" id="L77">        Scanner scanner = new Scanner(sourceDefs);</span>
+
+<span class="fc bfc" id="L79" title="All 2 branches covered.">        while (scanner.hasNextLine()) {</span>
+
+<span class="fc" id="L81">            String line = scanner.nextLine();</span>
+<span class="fc" id="L82">            line = Strings.trimWhitespace(line);</span>
+
+<span class="fc" id="L84">            boolean required = false;</span>
+
+<span class="fc" id="L86">            int i = line.lastIndexOf(REQUIRED_TOKEN);</span>
+<span class="pc bpc" id="L87" title="1 of 2 branches missed.">            if (i &gt; 0) {</span>
+<span class="nc" id="L88">                required = true;</span>
+<span class="nc" id="L89">                line = line.substring(0, i);</span>
+<span class="nc" id="L90">                line = Strings.trimWhitespace(line);</span>
+            }
+
+<span class="fc bfc" id="L93" title="All 2 branches covered.">            if (ENVVARS_TOKEN.equalsIgnoreCase(line)) {</span>
+<span class="fc" id="L94">                sources.add(buildEnvironmentPropertiesSource());</span>
+            }
+<span class="fc bfc" id="L96" title="All 2 branches covered.">            else if (SYSPROPS_TOKEN.equalsIgnoreCase(line)) {</span>
+<span class="fc" id="L97">                sources.add(buildSystemPropertiesSource());</span>
+            }
+<span class="fc bfc" id="L99" title="All 2 branches covered.">            else if (CONTEXT_PARAM_TOKEN.equalsIgnoreCase(line)) {</span>
+<span class="fc" id="L100">                String value = servletContext.getInitParameter(STORMPATH_PROPERTIES);</span>
+<span class="pc bpc" id="L101" title="1 of 2 branches missed.">                if (Strings.hasText(value)) {</span>
+<span class="nc" id="L102">                    sources.add(new ResourcePropertiesSource(new StringResource(value)));</span>
+                }
+<span class="fc" id="L104">            }</span>
+<span class="fc bfc" id="L105" title="All 2 branches covered.">            else if (INTERNAL_TOKEN.equalsIgnoreCase(line)){</span>
+<span class="fc" id="L106">                sources.addAll(getInternalPropertiesSources(servletContext));</span>
+            }
+            else {
+<span class="fc" id="L109">                Resource resource = resourceFactory.createResource(line);</span>
+<span class="fc" id="L110">                sources.add(buildResourcePropertiesSource(resource, required));</span>
+
+                // look for JSON and YAML files with the same name
+<span class="pc bpc" id="L113" title="1 of 2 branches missed.">                if (line.contains(&quot;.properties&quot;)) {</span>
+
+<span class="fc" id="L115">                    String jsonFile = line.replace(&quot;.properties&quot;, &quot;.json&quot;);</span>
+<span class="fc" id="L116">                    resource = resourceFactory.createResource(jsonFile);</span>
+<span class="fc" id="L117">                    sources.add(wrapIfRequired(new JSONPropertiesSource(resource), required));</span>
+
+<span class="fc" id="L119">                    String yamlFile = line.replace(&quot;.properties&quot;, &quot;.yaml&quot;);</span>
+<span class="fc" id="L120">                    resource = resourceFactory.createResource(yamlFile);</span>
+<span class="fc" id="L121">                    sources.add(wrapIfRequired(new YAMLPropertiesSource(resource), required));</span>
+
+<span class="fc" id="L123">                    yamlFile = line.replace(&quot;.properties&quot;, &quot;.yml&quot;);</span>
+<span class="fc" id="L124">                    resource = resourceFactory.createResource(yamlFile);</span>
+<span class="fc" id="L125">                    sources.add(wrapIfRequired(new YAMLPropertiesSource(resource), required));</span>
+                }
+            }
+<span class="fc" id="L128">        }</span>
+<span class="fc" id="L129">        return sources;</span>
+    }
+
+    private PropertiesSource buildEnvironmentPropertiesSource() {
+<span class="fc" id="L133">        return new FilteredPropertiesSource(</span>
+                new EnvironmentVariablesPropertiesSource(),
+<span class="fc" id="L135">                new FilteredPropertiesSource.Filter() {</span>
+                    @Override
+                    public String[] map(String key, String value) {
+<span class="pc bpc" id="L138" title="1 of 2 branches missed.">                        if (key.startsWith(&quot;STORMPATH_&quot;)) {</span>
+                            //we want to convert env var naming convention to dotted property convention
+                            //to allow overrides.  Overrides work based on overriding identically-named keys:
+<span class="nc" id="L141">                            key = envVarNameConverter.toDottedPropertyName(key);</span>
+<span class="nc" id="L142">                            return new String[]{key, value};</span>
+                        }
+<span class="fc" id="L144">                        return null;</span>
+                    }
+                });
+    }
+
+    private PropertiesSource buildSystemPropertiesSource() {
+<span class="fc" id="L150">        return new FilteredPropertiesSource(</span>
+                new SystemPropertiesSource(),
+<span class="fc" id="L152">                new FilteredPropertiesSource.Filter() {</span>
+                    @Override
+                    public String[] map(String key, String value) {
+<span class="pc bpc" id="L155" title="1 of 2 branches missed.">                        if (key.startsWith(&quot;stormpath.&quot;)) {</span>
+<span class="nc" id="L156">                            return new String[]{key, value};</span>
+                        }
+<span class="fc" id="L158">                        return null;</span>
+                    }
+                });
+    }
+
+    private PropertiesSource buildResourcePropertiesSource(Resource resource, boolean required) {
+
+<span class="fc" id="L165">        return wrapIfRequired(new ResourcePropertiesSource(resource), required);</span>
+    }
+
+    private PropertiesSource wrapIfRequired(PropertiesSource propertiesSource, boolean required) {
+
+<span class="pc bpc" id="L170" title="1 of 2 branches missed.">        if (!required) {</span>
+<span class="fc" id="L171">            propertiesSource = new OptionalPropertiesSource(propertiesSource);</span>
+        }
+<span class="fc" id="L173">        return propertiesSource;</span>
+    }
+
+    protected Collection&lt;PropertiesSource&gt; getInternalPropertiesSources(ServletContext servletContext) {
+<span class="fc" id="L177">        return Collections.emptySet();</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.7.7.201606060606</span></div></body></html>

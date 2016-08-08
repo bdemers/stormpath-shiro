@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../jacoco-resources/report.gif" type="image/gif"/><title>StormpathShiroConfigFactory.java</title><link rel="stylesheet" href="../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../index.html" class="el_report">Stormpath Shiro :: Test Coverage</a> &gt; <a href="../index.html" class="el_bundle">stormpath-shiro-servlet</a> &gt; <a href="index.source.html" class="el_package">com.stormpath.shiro.servlet.config</a> &gt; <span class="el_source">StormpathShiroConfigFactory.java</span></div><h1>StormpathShiroConfigFactory.java</h1><pre class="source lang-java linenums">package com.stormpath.shiro.servlet.config;
+
+import com.stormpath.sdk.impl.config.PropertiesSource;
+import com.stormpath.shiro.sdk.servlet.config.impl.MultipleSourceConfigFactory;
+
+import javax.servlet.ServletContext;
+import java.util.ArrayList;
+import java.util.Collection;
+
+/**
+ * Subclass of {@link MultipleSourceConfigFactory} that adds shiro.ini properties as config properties. &lt;BR/&gt;
+ * &lt;BR/&gt;
+ * The Shiro {@link org.apache.shiro.config.Ini} must be available as a {@link ServletContext} attribute named
+ * {@link StormpathShiroConfigFactory#SHIRO_STORMPATH_PROPERTIES_ATTRIBUTE}.
+ */
+<span class="fc" id="L16">public class StormpathShiroConfigFactory extends MultipleSourceConfigFactory {</span>
+
+<span class="fc" id="L18">    final public static String SHIRO_STORMPATH_PROPERTIES_ATTRIBUTE = StormpathShiroConfigFactory.class.getName() + &quot;_SHIRO_STORMPATH_PROPERTIES&quot;;</span>
+
+    @Override
+    protected Collection&lt;PropertiesSource&gt; getInternalPropertiesSources(ServletContext servletContext) {
+
+<span class="fc" id="L23">        PropertiesSource shiroPropertySource = (PropertiesSource) servletContext.getAttribute(SHIRO_STORMPATH_PROPERTIES_ATTRIBUTE);</span>
+
+<span class="fc" id="L25">        Collection&lt;PropertiesSource&gt; sources = new ArrayList&lt;PropertiesSource&gt;();</span>
+
+<span class="fc bfc" id="L27" title="All 2 branches covered.">        if (shiroPropertySource!= null) {</span>
+<span class="fc" id="L28">            sources.add(shiroPropertySource);</span>
+        }
+
+<span class="fc" id="L31">        return sources;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.7.7.201606060606</span></div></body></html>

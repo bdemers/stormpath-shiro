@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../jacoco-resources/report.gif" type="image/gif"/><title>StormpathWebRealm.java</title><link rel="stylesheet" href="../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../index.html" class="el_report">Stormpath Shiro :: Test Coverage</a> &gt; <a href="../index.html" class="el_bundle">stormpath-shiro-core</a> &gt; <a href="index.source.html" class="el_package">com.stormpath.shiro.realm</a> &gt; <span class="el_source">StormpathWebRealm.java</span></div><h1>StormpathWebRealm.java</h1><pre class="source lang-java linenums">package com.stormpath.shiro.realm;
+
+import com.stormpath.sdk.account.Account;
+import com.stormpath.sdk.oauth.AccessTokenResult;
+import org.apache.shiro.authc.*;
+import org.apache.shiro.authc.credential.AllowAllCredentialsMatcher;
+import org.apache.shiro.subject.PrincipalCollection;
+
+/**
+ * Realm implantation that pushes a stormpath-servlet authenticated/authorized Account into a Shiro Subject.
+ */
+public class StormpathWebRealm extends ApplicationRealm {
+
+    public StormpathWebRealm() {
+<span class="fc" id="L15">        super();</span>
+<span class="fc" id="L16">        this.setCredentialsMatcher(new AllowAllCredentialsMatcher());</span>
+<span class="fc" id="L17">        this.setAuthenticationTokenClass(AccessTokenResultAuthToken.class);</span>
+<span class="fc" id="L18">        this.setCachingEnabled(false);</span>
+<span class="fc" id="L19">    }</span>
+
+    @Override
+    protected AuthenticationInfo doGetAuthenticationInfo(AuthenticationToken token) throws AuthenticationException {
+
+<span class="nc" id="L24">        AccessTokenResultAuthToken accessAuthToken = (AccessTokenResultAuthToken) token;</span>
+
+        PrincipalCollection principals;
+
+        try {
+<span class="nc" id="L29">            principals = createPrincipals(accessAuthToken.getAccount());</span>
+<span class="nc" id="L30">        } catch (Exception e) {</span>
+<span class="nc" id="L31">            throw new AuthenticationException(&quot;Unable to obtain authenticated account properties.&quot;, e);</span>
+<span class="nc" id="L32">        }</span>
+
+<span class="nc" id="L34">        return new SimpleAuthenticationInfo(principals, null);</span>
+
+    }
+
+
+    public static class AccessTokenResultAuthToken implements AuthenticationToken {
+
+        final private Account account;
+
+
+<span class="nc" id="L44">        public AccessTokenResultAuthToken(AccessTokenResult accessTokenResult) {</span>
+<span class="nc" id="L45">            this.account = accessTokenResult.getAccount();</span>
+<span class="nc" id="L46">        }</span>
+
+<span class="fc" id="L48">        public AccessTokenResultAuthToken(Account account) {</span>
+<span class="fc" id="L49">            this.account = account;</span>
+<span class="fc" id="L50">        }</span>
+
+        public Account getAccount() {
+<span class="fc" id="L53">            return account;</span>
+        }
+
+        @Override
+        public Object getPrincipal() {
+<span class="nc" id="L58">            return getAccount();</span>
+        }
+
+        @Override
+        public Object getCredentials() {
+<span class="nc" id="L63">            return null;</span>
+        }
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.7.7.201606060606</span></div></body></html>

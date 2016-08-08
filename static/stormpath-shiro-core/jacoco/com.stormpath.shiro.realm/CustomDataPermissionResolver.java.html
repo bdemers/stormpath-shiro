@@ -1,0 +1,210 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>CustomDataPermissionResolver.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Stormpath Shiro :: Core</a> &gt; <a href="index.source.html" class="el_package">com.stormpath.shiro.realm</a> &gt; <span class="el_source">CustomDataPermissionResolver.java</span></div><h1>CustomDataPermissionResolver.java</h1><pre class="source lang-java linenums">/*
+ * Copyright 2013 Stormpath, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package com.stormpath.shiro.realm;
+
+import com.stormpath.sdk.directory.CustomData;
+import com.stormpath.shiro.authz.CustomDataPermissionsEditor;
+import org.apache.shiro.authz.Permission;
+import org.apache.shiro.authz.permission.PermissionResolver;
+import org.apache.shiro.authz.permission.WildcardPermissionResolver;
+import org.apache.shiro.util.CollectionUtils;
+
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
+
+/**
+ * A {@code CustomDataPermissionResolver} accesses a
+ * {@link #getCustomDataFieldName() specific named field} value of a {@link CustomData} resource that contains
+ * a {@code Set&amp;lt;String&amp;gt;} of Shiro permission Strings.
+ * &lt;p/&gt;
+ * The permissions stored in that field are assumed to be assigned to the CustomData's owning entity (an
+ * {@link com.stormpath.sdk.account.Account Account} or {@link com.stormpath.sdk.group.Group Group}).
+ * &lt;h3&gt;Custom Data Field Name&lt;/h3&gt;
+ * You can configure what named field is used to store the permissions via
+ * {@link #setCustomDataFieldName(String) fieldName} property.
+ * &lt;h3&gt;String to Permission Conversion&lt;/h3&gt;
+ * The Strings stored in the CustomData resource are converted to Shiro {@link Permission} instances via the
+ * {@link #getPermissionResolver() permissionResolver} property.  Unless overridden, the default instance is a Shiro
+ * {@link WildcardPermissionResolver}.
+ *
+ * @see AccountCustomDataPermissionResolver
+ * @see GroupCustomDataPermissionResolver
+ * @since 0.5
+ */
+public class CustomDataPermissionResolver {
+
+    private String customDataFieldName;
+
+    private PermissionResolver permissionResolver;
+
+    /**
+     * Creates a new instance, using the default {@link #getCustomDataFieldName() customDataFieldName} of
+     * {@code apacheShiroPermissions} and a default {@link WildcardPermissionResolver}.
+     */
+<span class="fc" id="L58">    public CustomDataPermissionResolver() {</span>
+<span class="fc" id="L59">        this.customDataFieldName = CustomDataPermissionsEditor.DEFAULT_CUSTOM_DATA_FIELD_NAME;</span>
+<span class="fc" id="L60">        this.permissionResolver = new WildcardPermissionResolver();</span>
+<span class="fc" id="L61">    }</span>
+
+    /**
+     * Returns the name of the {@link CustomData} field used to store the {@code Set&amp;lt;String&amp;gt;}
+     * of permissions.  The default name is
+     * {@code apacheShiroPermissions}, implying a {@code CustomData} JSON representation as follows:
+     * &lt;pre&gt;
+     * {
+     *     ... any other of your own custom data properties ...,
+     *
+     *     &quot;apacheShiroPermissions&quot;: [
+     *         &quot;perm1&quot;,
+     *         &quot;perm2&quot;,
+     *         ...,
+     *         &quot;permN&quot;j
+     *     ]
+     * }
+     * &lt;/pre&gt;
+     * You can change the name by calling {@link #setCustomDataFieldName(String)}.
+     *
+     * @return the name of the {@link CustomData} field used to store the {@code Set&amp;lt;String&amp;gt;}
+     *         of permissions.
+     */
+    public String getCustomDataFieldName() {
+<span class="fc" id="L85">        return customDataFieldName;</span>
+    }
+
+    /**
+     * Sets the name of the {@link CustomData} field used to store the {@code Set&amp;lt;String&amp;gt;}
+     * of permissions.  The default name is
+     * {@code apacheShiroPermissions}, implying a {@code CustomData} JSON representation as follows:
+     * &lt;pre&gt;
+     * {
+     *     ... any other of your own custom data properties ...,
+     *
+     *     &quot;apacheShiroPermissions&quot;: [
+     *         &quot;perm1&quot;,
+     *         &quot;perm2&quot;,
+     *         ...,
+     *         &quot;permN&quot;j
+     *     ]
+     * }
+     * &lt;/pre&gt;
+     * If you changed this name to be {@code myApplicationPermissions} for example, the CustomData representation
+     * would look something like this instead:
+     * &lt;pre&gt;
+     * {
+     *     ... any other of your own custom data properties ...,
+     *
+     *     &quot;myApplicationPermissions&quot;: [
+     *         &quot;perm1&quot;,
+     *         &quot;perm2&quot;,
+     *         ...,
+     *         &quot;permN&quot;j
+     *     ]
+     * }
+     * &lt;/pre&gt;
+     *
+     * @param customDataFieldName the name of the {@link CustomData} field used to store the {@code Set&amp;lt;String&amp;gt;}
+     *                            of permissions.
+     */
+    public void setCustomDataFieldName(String customDataFieldName) {
+<span class="fc" id="L123">        this.customDataFieldName = customDataFieldName;</span>
+<span class="fc" id="L124">    }</span>
+
+    /**
+     * Returns the {@link PermissionResolver} used to convert {@link #getCustomDataFieldName() stored permission strings}
+     * to Shiro {@link Permission} instances for {@link org.apache.shiro.subject.Subject Subject} authorization.
+     * &lt;p/&gt;
+     * The default / pre-configured instance is a {@link WildcardPermissionResolver}.
+     *
+     * @return the {@link PermissionResolver} used to convert {@link #getCustomDataFieldName() stored permission strings}
+     *         to Shiro {@link Permission} instances for {@link org.apache.shiro.subject.Subject Subject} authorization.
+     */
+    public PermissionResolver getPermissionResolver() {
+<span class="fc" id="L136">        return permissionResolver;</span>
+    }
+
+    /**
+     * Sets the {@link PermissionResolver} used to convert {@link #getCustomDataFieldName() stored permission strings}
+     * to Shiro {@link Permission} instances for {@link org.apache.shiro.subject.Subject Subject} authorization.
+     *
+     * @param permissionResolver the {@link PermissionResolver} used to convert {@link #getCustomDataFieldName() stored permission strings}
+     *                           to Shiro {@link Permission} instances for {@link org.apache.shiro.subject.Subject Subject} authorization.
+     */
+    public void setPermissionResolver(PermissionResolver permissionResolver) {
+<span class="fc" id="L147">        this.permissionResolver = permissionResolver;</span>
+<span class="fc" id="L148">    }</span>
+
+    /**
+     * Returns a {@code Set&amp;lt;String&amp;gt;} of permission strings that are stored in the specified
+     * {@link CustomData} instance (under the {@link #getCustomDataFieldName() customDataFieldName} key), or an
+     * empty collection if no permissions are stored.
+     * &lt;p/&gt;
+     * This implementation internally delegates field access and Set construction to a
+     * {@link CustomDataPermissionsEditor} instance, e.g.
+     * &lt;pre&gt;
+     * return new CustomDataPermissionsEditor(customData)
+     *     .setFieldName(getCustomDataFieldName())
+     *     .getPermissionStrings();
+     * &lt;/pre&gt;
+     *
+     * @param customData the custom data instance that might have a {@code Set&amp;lt;String&amp;gt;} of permissions stored in
+     *                   a key named {@link #getCustomDataFieldName()}.
+     * @return a {@code Set&amp;lt;String&amp;gt;} of permission strings that are stored in the specified
+     *         {@link CustomData} instance (under the {@link #getCustomDataFieldName() customDataFieldName} key), or an
+     *         empty collection if no permissions are stored.
+     * @see CustomDataPermissionsEditor
+     */
+    protected Set&lt;String&gt; getPermissionStrings(CustomData customData) {
+<span class="nc" id="L171">        return new CustomDataPermissionsEditor(customData)</span>
+<span class="nc" id="L172">                .setFieldName(getCustomDataFieldName())</span>
+<span class="nc" id="L173">                .getPermissionStrings();</span>
+    }
+
+    /**
+     * Returns a set of Shiro {@link Permission} instances stored in the specified {@link CustomData} resource.  This
+     * implementation will:
+     * &lt;ol&gt;
+     * &lt;li&gt;{@link #getPermissionStrings(com.stormpath.sdk.directory.CustomData) Get all permission strings} stored
+     * in the CustomData instance&lt;/li&gt;
+     * &lt;li&gt;Loop over these strings, and for each one, create a {@link Permission} instance using the
+     * {@link #getPermissionResolver() permissionResolver} property.&lt;/li&gt;
+     * &lt;li&gt;Return the total constructed Set of Permission instances to the caller.&lt;/li&gt;
+     * &lt;/ol&gt;
+     *
+     * @param customData the CustomData instance that may contain permission strings to obtain
+     * @return a set of Shiro {@link Permission} instances stored in the specified {@link CustomData} resource.
+     */
+    protected Set&lt;Permission&gt; getPermissions(CustomData customData) {
+
+<span class="fc" id="L192">        Set&lt;String&gt; permStrings = getPermissionStrings(customData);</span>
+
+<span class="pc bpc" id="L194" title="1 of 2 branches missed.">        if (CollectionUtils.isEmpty(permStrings)) {</span>
+<span class="fc" id="L195">            return Collections.emptySet();</span>
+        }
+
+<span class="nc" id="L198">        PermissionResolver permissionResolver = getPermissionResolver();</span>
+
+<span class="nc" id="L200">        Set&lt;Permission&gt; perms = new HashSet&lt;Permission&gt;(permStrings.size());</span>
+
+<span class="nc bnc" id="L202" title="All 2 branches missed.">        for (String s : permStrings) {</span>
+<span class="nc" id="L203">            Permission perm = permissionResolver.resolvePermission(s);</span>
+<span class="nc" id="L204">            perms.add(perm);</span>
+<span class="nc" id="L205">        }</span>
+
+<span class="nc" id="L207">        return perms;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.7.7.201606060606</span></div></body></html>

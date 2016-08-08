@@ -1,0 +1,32 @@
+GROUP,PACKAGE,CLASS,INSTRUCTION_MISSED,INSTRUCTION_COVERED,BRANCH_MISSED,BRANCH_COVERED,LINE_MISSED,LINE_COVERED,COMPLEXITY_MISSED,COMPLEXITY_COVERED,METHOD_MISSED,METHOD_COVERED
+Stormpath Shiro :: Test Coverage/stormpath-shiro-core,com.stormpath.shiro.authz,CustomDataPermissionsEditor,7,234,3,29,0,61,3,22,0,9
+Stormpath Shiro :: Test Coverage/stormpath-shiro-core,com.stormpath.shiro.config,DefaultClientFactory,215,0,22,0,57,0,21,0,10,0
+Stormpath Shiro :: Test Coverage/stormpath-shiro-core,com.stormpath.shiro.client,ClientFactory,88,0,0,0,24,0,12,0,12,0
+Stormpath Shiro :: Test Coverage/stormpath-shiro-core,com.stormpath.shiro.cache,ShiroCacheManager,0,19,0,0,0,6,0,2,0,2
+Stormpath Shiro :: Test Coverage/stormpath-shiro-core,com.stormpath.shiro.cache,ShiroCache,0,25,0,0,0,7,0,4,0,4
+Stormpath Shiro :: Test Coverage/stormpath-shiro-core,com.stormpath.shiro.realm,DefaultGroupRoleResolver,0,159,1,25,0,41,1,19,0,7
+Stormpath Shiro :: Test Coverage/stormpath-shiro-core,com.stormpath.shiro.realm,CustomDataPermissionResolver,39,34,3,1,10,13,3,6,1,6
+Stormpath Shiro :: Test Coverage/stormpath-shiro-core,com.stormpath.shiro.realm,StormpathWebRealm.AccessTokenResultAuthToken,12,9,0,0,5,4,3,2,3,2
+Stormpath Shiro :: Test Coverage/stormpath-shiro-core,com.stormpath.shiro.realm,StormpathWebRealm,22,14,0,0,6,5,1,1,1,1
+Stormpath Shiro :: Test Coverage/stormpath-shiro-core,com.stormpath.shiro.realm,AccountCustomDataPermissionResolver,5,3,0,0,1,1,1,1,1,1
+Stormpath Shiro :: Test Coverage/stormpath-shiro-core,com.stormpath.shiro.realm,DefaultGroupRoleResolver.Mode,5,83,0,4,0,9,1,6,1,4
+Stormpath Shiro :: Test Coverage/stormpath-shiro-core,com.stormpath.shiro.realm,GroupCustomDataPermissionResolver,5,3,0,0,1,1,1,1,1,1
+Stormpath Shiro :: Test Coverage/stormpath-shiro-core,com.stormpath.shiro.realm,ApplicationRealm,183,288,29,15,46,85,23,26,6,21
+Stormpath Shiro :: Test Coverage/stormpath-shiro-servlet,com.stormpath.shiro.servlet.config,StormpathWebClientFactory,0,50,0,0,0,19,0,7,0,7
+Stormpath Shiro :: Test Coverage/stormpath-shiro-servlet,com.stormpath.shiro.servlet.config,IniPropertiesSource,0,50,0,6,0,13,0,5,0,2
+Stormpath Shiro :: Test Coverage/stormpath-shiro-servlet,com.stormpath.shiro.servlet.config,StormpathWebClientFactory.ShiroBridgeServletContextClientFactory,0,110,0,16,0,23,0,12,0,4
+Stormpath Shiro :: Test Coverage/stormpath-shiro-servlet,com.stormpath.shiro.servlet.config,StormpathShiroConfigFactory,0,31,0,2,0,7,0,4,0,3
+Stormpath Shiro :: Test Coverage/stormpath-shiro-servlet,com.stormpath.shiro.servlet.config,ShiroIniConfigLoader,0,37,1,1,0,11,1,3,0,3
+Stormpath Shiro :: Test Coverage/stormpath-shiro-servlet,com.stormpath.shiro.servlet.config.filter,ShiroLogoutFilterFactory,0,7,0,0,0,2,0,2,0,2
+Stormpath Shiro :: Test Coverage/stormpath-shiro-servlet,com.stormpath.shiro.servlet.config.filter,ShiroIDSiteResultFilterFactory,0,34,0,0,0,10,0,3,0,3
+Stormpath Shiro :: Test Coverage/stormpath-shiro-servlet,com.stormpath.shiro.servlet.config.filter,ShiroLoginFilterFactory,0,7,0,0,0,2,0,2,0,2
+Stormpath Shiro :: Test Coverage/stormpath-shiro-servlet,com.stormpath.shiro.servlet.mvc,ShiroLoginController,0,54,0,0,0,11,0,2,0,2
+Stormpath Shiro :: Test Coverage/stormpath-shiro-servlet,com.stormpath.shiro.servlet.mvc,ShiroLoginHandler,0,23,0,0,0,8,0,2,0,2
+Stormpath Shiro :: Test Coverage/stormpath-shiro-servlet,com.stormpath.shiro.servlet.mvc,ShiroIDSiteResultController,0,38,0,0,0,9,0,2,0,2
+Stormpath Shiro :: Test Coverage/stormpath-shiro-servlet,com.stormpath.shiro.servlet.mvc,ShiroLogoutController,0,22,0,0,0,8,0,3,0,3
+Stormpath Shiro :: Test Coverage/stormpath-shiro-servlet,com.stormpath.shiro.sdk.servlet.config.impl,MultipleSourceConfigFactory,20,236,5,17,4,51,5,15,0,9
+Stormpath Shiro :: Test Coverage/stormpath-shiro-servlet,com.stormpath.shiro.sdk.servlet.config.impl,MultipleSourceConfigFactory.new FilteredPropertiesSource.Filter() {...},11,12,1,1,1,3,1,2,0,2
+Stormpath Shiro :: Test Coverage/stormpath-shiro-servlet,com.stormpath.shiro.sdk.servlet.config.impl,MultipleSourceConfigFactory.new FilteredPropertiesSource.Filter() {...},15,12,1,1,2,3,1,2,0,2
+Stormpath Shiro :: Test Coverage/stormpath-shiro-servlet,com.stormpath.shiro.servlet.env,StormpathShiroIniEnvironment.WebIniSecurityManagerFactoryWithDefaults,0,20,0,0,0,6,0,2,0,2
+Stormpath Shiro :: Test Coverage/stormpath-shiro-servlet,com.stormpath.shiro.servlet.env,StormpathShiroIniEnvironment,7,170,3,9,1,46,3,13,0,10
+Stormpath Shiro :: Test Coverage/stormpath-shiro-servlet,com.stormpath.shiro.servlet.env,StormpathShiroEnvironmentLoaderListener,22,0,2,0,6,0,3,0,2,0

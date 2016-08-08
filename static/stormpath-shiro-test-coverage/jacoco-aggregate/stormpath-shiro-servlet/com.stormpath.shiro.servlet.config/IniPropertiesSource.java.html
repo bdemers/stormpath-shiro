@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../jacoco-resources/report.gif" type="image/gif"/><title>IniPropertiesSource.java</title><link rel="stylesheet" href="../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../index.html" class="el_report">Stormpath Shiro :: Test Coverage</a> &gt; <a href="../index.html" class="el_bundle">stormpath-shiro-servlet</a> &gt; <a href="index.source.html" class="el_package">com.stormpath.shiro.servlet.config</a> &gt; <span class="el_source">IniPropertiesSource.java</span></div><h1>IniPropertiesSource.java</h1><pre class="source lang-java linenums">package com.stormpath.shiro.servlet.config;
+
+
+import com.stormpath.sdk.impl.config.PropertiesSource;
+import org.apache.shiro.config.Ini;
+import org.apache.shiro.util.CollectionUtils;
+
+import java.util.Collections;
+import java.util.Map;
+import java.util.TreeMap;
+
+public class IniPropertiesSource implements PropertiesSource {
+
+    final private Ini ini;
+    final private static String STORMPATH_CONFIG_SECTION_NAME = &quot;stormpath&quot;;
+
+<span class="fc" id="L17">    public IniPropertiesSource(Ini ini) {</span>
+<span class="fc" id="L18">        this.ini = ini;</span>
+<span class="fc" id="L19">    }</span>
+
+    @Override
+    public Map&lt;String, String&gt; getProperties() {
+
+<span class="fc bfc" id="L24" title="All 2 branches covered.">        if (CollectionUtils.isEmpty(ini)) {</span>
+<span class="fc" id="L25">            return Collections.emptyMap();</span>
+        }
+
+        // find the 'stormpath' config section, otherwise return an empty map
+<span class="fc" id="L29">        Ini.Section section = ini.getSection(STORMPATH_CONFIG_SECTION_NAME);</span>
+<span class="fc bfc" id="L30" title="All 2 branches covered.">        if (CollectionUtils.isEmpty(section)) {</span>
+<span class="fc" id="L31">            section = ini.getSection(Ini.DEFAULT_SECTION_NAME);</span>
+        }
+
+<span class="fc bfc" id="L34" title="All 2 branches covered.">        if (CollectionUtils.isEmpty(section)) {</span>
+<span class="fc" id="L35">            return Collections.emptyMap();</span>
+        }
+
+        // we now have a Ini section with some content
+<span class="fc" id="L39">        TreeMap&lt;String, String&gt; allProperties = new TreeMap&lt;String, String&gt;(section);</span>
+<span class="fc" id="L40">        String keyPrefix = &quot;stormpath.&quot;;</span>
+<span class="fc" id="L41">        return Collections.unmodifiableMap(allProperties.subMap(keyPrefix, keyPrefix + Character.MAX_VALUE));</span>
+
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.7.7.201606060606</span></div></body></html>

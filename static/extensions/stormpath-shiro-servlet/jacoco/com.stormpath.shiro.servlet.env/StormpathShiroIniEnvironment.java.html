@@ -1,0 +1,179 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>StormpathShiroIniEnvironment.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Stormpath :: Shiro :: Servlet</a> &gt; <a href="index.source.html" class="el_package">com.stormpath.shiro.servlet.env</a> &gt; <span class="el_source">StormpathShiroIniEnvironment.java</span></div><h1>StormpathShiroIniEnvironment.java</h1><pre class="source lang-java linenums">package com.stormpath.shiro.servlet.env;
+
+import com.stormpath.sdk.client.Client;
+import com.stormpath.sdk.servlet.client.DefaultServletContextClientFactory;
+import com.stormpath.sdk.servlet.config.ConfigLoader;
+import com.stormpath.sdk.servlet.config.ConfigResolver;
+import com.stormpath.shiro.config.ClientFactory;
+import com.stormpath.shiro.realm.ApplicationRealm;
+import com.stormpath.shiro.realm.StormpathWebRealm;
+import com.stormpath.shiro.servlet.config.ShiroIniConfigLoader;
+import com.stormpath.shiro.servlet.config.StormpathWebClientFactory;
+import org.apache.shiro.config.Ini;
+import org.apache.shiro.config.IniSecurityManagerFactory;
+import org.apache.shiro.util.CollectionUtils;
+import org.apache.shiro.web.config.WebIniSecurityManagerFactory;
+import org.apache.shiro.web.env.IniWebEnvironment;
+import org.apache.shiro.web.mgt.WebSecurityManager;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.Map;
+
+/**
+ * {@link IniWebEnvironment} implementation that creates a default Stormpath {@link StormpathWebRealm}.
+ *&lt;BR/&gt;&lt;BR/&gt;
+ * The default objects can be over written, the defaults for these are equivalent to:
+ *
+ * &lt;code&gt;&lt;pre&gt;
+ * [main]
+ * stormpathClient = com.stormpath.shiro.web.servlet.config.StormpathWebClientFactory
+ * stormpathRealm = com.stormpath.shiro.realm.StormpathWebRealm
+ * stormpathRealm.client = $stormpathClient
+ * &lt;/pre&gt;&lt;/code&gt;
+ * &lt;BR/&gt;
+ * Further &lt;code&gt;stormpath.*&lt;/code&gt; properties are used to provide defaults.&lt;BR/&gt;
+ * &lt;code&gt;&lt;pre&gt;
+ * stormpathClient.baseUrl = stormpath.client.baseUrl
+ * stormpathClient.apiKeyFileLocation = stormpath.client.apiKey.file
+ * stormpathClient.apiKeyId = stormpath.client.apiKey.id
+ * stormpathClient.apiKeySecret = stormpath.client.apiKey.secret
+ *
+ * stormpathRealm.applicationRestUrl = stormpath.application.href
+ * &lt;/pre&gt;&lt;/code&gt;
+ */
+<span class="fc" id="L47">public class StormpathShiroIniEnvironment extends IniWebEnvironment {</span>
+
+<span class="fc" id="L49">    final private Logger log = LoggerFactory.getLogger(StormpathShiroIniEnvironment.class);</span>
+
+    private ConfigLoader configLoader;
+
+    @Override
+    public void setIni(Ini ini) {
+
+<span class="fc bfc" id="L56" title="All 2 branches covered.">        if (ini == null) {</span>
+<span class="fc" id="L57">            ini = new Ini();</span>
+        }
+
+<span class="fc bfc" id="L60" title="All 2 branches covered.">        if (CollectionUtils.isEmpty(ini.getSection(Ini.DEFAULT_SECTION_NAME))) {</span>
+<span class="fc" id="L61">            ini.setSectionProperty(Ini.DEFAULT_SECTION_NAME, &quot;__empty_property__&quot;, String.class.getName());</span>
+        }
+
+<span class="fc" id="L64">        super.setIni(ini);</span>
+<span class="fc" id="L65">    }</span>
+
+    private Ini.Section getConfigSection() {
+<span class="fc" id="L68">        Ini ini = getIni();</span>
+
+<span class="fc" id="L70">        Ini.Section configSection = ini.getSection(IniSecurityManagerFactory.MAIN_SECTION_NAME);</span>
+<span class="fc bfc" id="L71" title="All 2 branches covered.">        if (CollectionUtils.isEmpty(configSection)) {</span>
+<span class="fc" id="L72">            configSection = ini.getSection(Ini.DEFAULT_SECTION_NAME);</span>
+        }
+
+<span class="fc" id="L75">        return configSection;</span>
+    }
+
+    private Map&lt;String, ?&gt; getDefaultEnvironmentObjects() {
+
+<span class="fc" id="L80">        Map&lt;String, Object&gt; defaults = new LinkedHashMap&lt;String, Object&gt;();</span>
+
+<span class="fc" id="L82">        Ini.Section configSection = getConfigSection();</span>
+<span class="fc" id="L83">        defaults.put(&quot;stormpathClient&quot;, new StormpathWebClientFactory(getServletContext()));</span>
+
+<span class="fc" id="L85">        String href = ConfigResolver.INSTANCE.getConfig(getServletContext()).get(DefaultServletContextClientFactory.STORMPATH_APPLICATION_HREF);</span>
+
+<span class="fc" id="L87">        ApplicationRealm stormpathRealm = new StormpathWebRealm();</span>
+<span class="fc" id="L88">        stormpathRealm.setApplicationRestUrl(href);</span>
+<span class="fc" id="L89">        defaults.put(&quot;stormpathRealm&quot;, stormpathRealm);</span>
+
+        // lazy associate the client with the realm, so changes can be made if needed.
+<span class="pc bpc" id="L92" title="1 of 2 branches missed.">        if (!configSection.containsKey(&quot;stormpathRealm.client&quot;)) {</span>
+<span class="fc" id="L93">            configSection.put(&quot;stormpathRealm.client&quot;, &quot;$stormpathClient&quot;);</span>
+        }
+
+<span class="fc" id="L96">        return defaults;</span>
+    }
+
+
+    @Override
+    protected void configure() {
+
+<span class="fc" id="L103">        configureStormpathEnvironment();</span>
+
+<span class="fc" id="L105">        super.configure();</span>
+
+<span class="fc" id="L107">        ClientFactory clientFactory = getObject(&quot;stormpathClient&quot;, ClientFactory.class);</span>
+<span class="fc" id="L108">        log.debug(&quot;Updating Client in ServletContext, with instance configured via shiro.ini&quot;);</span>
+<span class="fc" id="L109">        getServletContext().setAttribute(Client.class.getName(), clientFactory.getInstance());</span>
+
+<span class="fc" id="L111">    }</span>
+
+    protected void configureStormpathEnvironment() {
+<span class="fc" id="L114">        ensureConfigLoader().createConfig(getServletContext());</span>
+<span class="fc" id="L115">    }</span>
+
+    private ConfigLoader ensureConfigLoader() {
+<span class="pc bpc" id="L118" title="1 of 2 branches missed.">        if (configLoader == null) {</span>
+<span class="nc" id="L119">            configLoader = new ShiroIniConfigLoader(getIni());</span>
+        }
+<span class="fc" id="L121">        return configLoader;</span>
+    }
+
+    @Override
+    public void destroy() throws Exception {
+<span class="fc" id="L126">        ensureConfigLoader().destroyConfig(getServletContext());</span>
+<span class="fc" id="L127">        getServletContext().removeAttribute(Client.class.getName());</span>
+<span class="fc" id="L128">        super.destroy();</span>
+<span class="fc" id="L129">    }</span>
+
+    // TODO think about putting these in Shiro proper
+
+
+    @Override
+    protected WebSecurityManager createWebSecurityManager() {
+<span class="fc" id="L136">        WebIniSecurityManagerFactory factory = getSecurityManagerFactory();</span>
+
+<span class="fc" id="L138">        Ini ini = getIni();</span>
+        // we make sure this is not empty above, TODO: think about this.
+<span class="fc" id="L140">        factory.setIni(ini);</span>
+
+<span class="fc" id="L142">        WebSecurityManager wsm = (WebSecurityManager)factory.getInstance();</span>
+
+        //SHIRO-306 - get beans after they've been created (the call was before the factory.getInstance() call,
+        //which always returned null.
+<span class="fc" id="L146">        Map&lt;String, ?&gt; beans = factory.getBeans();</span>
+<span class="pc bpc" id="L147" title="1 of 2 branches missed.">        if (!CollectionUtils.isEmpty(beans)) {</span>
+<span class="fc" id="L148">            this.objects.putAll(beans);</span>
+        }
+
+<span class="fc" id="L151">        return wsm;</span>
+    }
+
+    protected WebIniSecurityManagerFactory getSecurityManagerFactory() {
+        // default implementation
+//        WebIniSecurityManagerFactory factory = new WebIniSecurityManagerFactory();
+
+<span class="fc" id="L158">        return new WebIniSecurityManagerFactoryWithDefaults(getDefaultEnvironmentObjects());</span>
+    }
+
+    private static class WebIniSecurityManagerFactoryWithDefaults extends WebIniSecurityManagerFactory {
+
+        final private Map&lt;String, ?&gt; environmentDefaults;
+
+        public WebIniSecurityManagerFactoryWithDefaults(Map&lt;String, ?&gt; environmentDefaults) {
+<span class="fc" id="L166">            super();</span>
+<span class="fc" id="L167">            this.environmentDefaults = environmentDefaults;</span>
+<span class="fc" id="L168">        }</span>
+
+        @Override
+        protected Map&lt;String, ?&gt; createDefaults(Ini ini, Ini.Section mainSection) {
+<span class="fc" id="L172">            Map&lt;String, Object&gt; defaults = new HashMap&lt;String, Object&gt;(super.createDefaults(ini, mainSection));</span>
+<span class="fc" id="L173">            defaults.putAll(environmentDefaults);</span>
+<span class="fc" id="L174">            return defaults;</span>
+        }
+    }
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.7.7.201606060606</span></div></body></html>

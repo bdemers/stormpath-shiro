@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ShiroCacheManager.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Stormpath Shiro :: Core</a> &gt; <a href="index.source.html" class="el_package">com.stormpath.shiro.cache</a> &gt; <span class="el_source">ShiroCacheManager.java</span></div><h1>ShiroCacheManager.java</h1><pre class="source lang-java linenums">/*
+ * Copyright 2013 Stormpath, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package com.stormpath.shiro.cache;
+
+import com.stormpath.sdk.cache.Cache;
+import com.stormpath.sdk.cache.CacheManager;
+import com.stormpath.sdk.lang.Assert;
+
+/**
+ * A Stormpath SDK {@link CacheManager} implementation that wraps a Shiro
+ * {@link org.apache.shiro.cache.CacheManager CacheManager} instance.  This allows the Stormpath SDK to use your
+ * existing Shiro caching mechanism so you only need to configure one caching implementation.
+ * &lt;p/&gt;
+ * This implementation effectively acts as an adapter or bridge from the Stormpath SDK cacheManager API to the Shiro
+ * cacheManager API.
+ *
+ * @since 0.4.0
+ */
+public class ShiroCacheManager implements CacheManager {
+
+    private final org.apache.shiro.cache.CacheManager SHIRO_CACHE_MANAGER;
+
+    /**
+     * Constructs a new {@code ShiroCacheManager} instance that wraps (delegates to) the specified
+     * Shiro {@link org.apache.shiro.cache.CacheManager CacheManager} instance.
+     *
+     * @param shiroCacheManager the target Shiro cache manager to wrap.
+     */
+<span class="fc" id="L42">    public ShiroCacheManager(org.apache.shiro.cache.CacheManager shiroCacheManager) {</span>
+<span class="fc" id="L43">        Assert.notNull(shiroCacheManager, &quot;Shiro CacheManager instance cannot be null.&quot;);</span>
+<span class="fc" id="L44">        this.SHIRO_CACHE_MANAGER = shiroCacheManager;</span>
+<span class="fc" id="L45">    }</span>
+
+    /**
+     * Consults the wrapped Shiro {@link org.apache.shiro.cache.CacheManager CacheManager} instance to obtain a
+     * named Shiro {@link org.apache.shiro.cache.Cache Cache} instance.  The instance is wrapped and returned as a
+     * {@link ShiroCache} instance, which acts as a bridge/adapter over Shiro's existing Cache API.
+     *
+     * @param name the name of the cache to acquire.
+     * @param &lt;K&gt;  The cache key type
+     * @param &lt;V&gt;  The cache value type
+     * @return the Cache with the given name
+     */
+    @Override
+    public &lt;K, V&gt; Cache&lt;K, V&gt; getCache(String name) {
+<span class="fc" id="L59">        final org.apache.shiro.cache.Cache&lt;K, V&gt; shiroCache = SHIRO_CACHE_MANAGER.getCache(name);</span>
+<span class="fc" id="L60">        return new ShiroCache&lt;K, V&gt;(shiroCache);</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.7.7.201606060606</span></div></body></html>

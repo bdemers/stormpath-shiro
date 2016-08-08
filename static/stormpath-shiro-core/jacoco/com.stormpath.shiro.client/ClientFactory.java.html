@@ -1,0 +1,197 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ClientFactory.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Stormpath Shiro :: Core</a> &gt; <a href="index.source.html" class="el_package">com.stormpath.shiro.client</a> &gt; <span class="el_source">ClientFactory.java</span></div><h1>ClientFactory.java</h1><pre class="source lang-java linenums">/*
+ * Copyright 2013 Stormpath, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package com.stormpath.shiro.client;
+
+import com.stormpath.sdk.api.ApiKeys;
+import com.stormpath.sdk.client.Client;
+import com.stormpath.sdk.client.ClientBuilder;
+import com.stormpath.sdk.client.Clients;
+import com.stormpath.shiro.cache.ShiroCacheManager;
+import org.apache.shiro.cache.CacheManager;
+import org.apache.shiro.util.AbstractFactory;
+
+import java.io.InputStream;
+import java.io.Reader;
+import java.util.Properties;
+
+/**
+ * A simple bridge component that allows a Stormpath SDK Client to be created via Shiro's
+ * {@link org.apache.shiro.util.Factory Factory} concept.
+ * &lt;p/&gt;
+ * As this class is a simple bridge between APIs, it does not do much - all configuration properties are immediately
+ * passed through to an internal {@link com.stormpath.sdk.client.ClientBuilder ClientBuilder} instance, and the
+ * {@link #createInstance()} implementation merely calls {@link com.stormpath.sdk.client.ClientBuilder#build()}.
+ * &lt;h5&gt;Usage&lt;/h5&gt;
+ * Example {@code shiro.ini} configuration:
+ * &lt;p/&gt;
+ * &lt;pre&gt;
+ * [main]
+ * ...
+ * cacheManager = some.impl.of.org.apache.shiro.cache.CacheManager
+ * securityManager.cacheManager = $cacheManager
+ *
+ * stormpathClient = com.stormpath.shiro.client.ClientFactory
+ * stormpathClient.apiKeyFileLocation = /home/myhomedir/.stormpath/apiKey.properties
+ * stormpathClient.cacheManager = $cacheManager
+ *
+ * stormpathRealm = com.stormpath.shiro.realm.ApplicationRealm
+ * stormpathRealm.client = $stormpathClient
+ * stormpathRealm.applicationRestUrl = https://api.stormpath.com/v1/applications/yourAppIdHere
+ *
+ * securityManager.realm = $stormpathRealm
+ *
+ * ...
+ * &lt;/pre&gt;
+ *
+ * @see ClientBuilder
+ * @see ClientBuilder#setApiKey(com.stormpath.sdk.api.ApiKey)
+ * @see com.stormpath.sdk.api.ApiKeyBuilder#setFileLocation(String)
+ * @since 0.1
+ */
+public class ClientFactory extends AbstractFactory&lt;Client&gt; {
+
+    private ClientBuilder clientBuilder;
+
+    public ClientFactory() {
+<span class="nc" id="L69">        super();</span>
+<span class="nc" id="L70">        this.clientBuilder = Clients.builder();</span>
+<span class="nc" id="L71">    }</span>
+
+    @Override
+    protected Client createInstance() {
+<span class="nc" id="L75">        return clientBuilder.build();</span>
+    }
+
+    public ClientBuilder getClientBuilder() {
+<span class="nc" id="L79">        return clientBuilder;</span>
+    }
+
+    public void setClientBuilder(ClientBuilder clientBuilder) {
+<span class="nc" id="L83">        this.clientBuilder = clientBuilder;</span>
+<span class="nc" id="L84">    }</span>
+
+    /**
+     * Calls {@code clientBuilder.setApiKey(ApiKeys.builder().}{@link com.stormpath.sdk.api.ApiKeyBuilder#setFileLocation(String) setFileLocation(apiKeyFileLocation)}{@code .build())}.
+     * See that JavaDoc for expected syntax/format.
+     *
+     * @param apiKeyFileLocation the file, classpath or url location of the API Key {@code .properties} file to load when
+     *                           constructing the API Key to use for communicating with the Stormpath REST API.
+     * @see ClientBuilder#setApiKey(com.stormpath.sdk.api.ApiKey)
+     * @see com.stormpath.sdk.api.ApiKeyBuilder#setFileLocation(String)
+     * @since 0.2
+     */
+    public void setApiKeyFileLocation(String apiKeyFileLocation) {
+<span class="nc" id="L97">        this.clientBuilder.setApiKey(ApiKeys.builder().setFileLocation(apiKeyFileLocation).build());</span>
+<span class="nc" id="L98">    }</span>
+
+    /**
+     * Calls {@code clientBuilder.setApiKey(ApiKeys.builder().}{@link com.stormpath.sdk.api.ApiKeyBuilder#setInputStream(java.io.InputStream) setInputStream(apiKeyInputStream)}{@code .build())}.
+     *
+     * @param apiKeyInputStream the InputStream to use to construct a configuration Properties instance.
+     * @see ClientBuilder#setApiKey(com.stormpath.sdk.api.ApiKey)
+     * @see com.stormpath.sdk.api.ApiKeyBuilder#setInputStream(java.io.InputStream)
+     * @since 0.2
+     */
+    public void setApiKeyInputStream(InputStream apiKeyInputStream) {
+<span class="nc" id="L109">        this.clientBuilder.setApiKey(ApiKeys.builder().setInputStream(apiKeyInputStream).build());</span>
+<span class="nc" id="L110">    }</span>
+
+    /**
+     * Calls {@code clientBuilder.setApiKey(ApiKeys.builder().}{@link com.stormpath.sdk.api.ApiKeyBuilder#setReader(java.io.Reader) setReader(apiKeyReader)}{@code .build())}.
+     *
+     * @param apiKeyReader the reader to use to construct a configuration Properties instance.
+     * @see ClientBuilder#setApiKey(com.stormpath.sdk.api.ApiKey)
+     * @see com.stormpath.sdk.api.ApiKeyBuilder#setReader(java.io.Reader)
+     * @since 0.2
+     */
+    public void setApiKeyReader(Reader apiKeyReader) {
+<span class="nc" id="L121">        this.clientBuilder.setApiKey(ApiKeys.builder().setReader(apiKeyReader).build());</span>
+<span class="nc" id="L122">    }</span>
+
+    /**
+     * Calls {@code clientBuilder.setApiKey(ApiKeys.builder().}{@link com.stormpath.sdk.api.ApiKeyBuilder#setProperties(java.util.Properties) setProperties(properties)}{@code .build())}.
+     *
+     * @param properties the properties instance to use to load the API Key ID and Secret.
+     * @see ClientBuilder#setApiKey(com.stormpath.sdk.api.ApiKey)
+     * @see com.stormpath.sdk.api.ApiKeyBuilder#setProperties(java.util.Properties)
+     * @since 0.2
+     */
+    public void setApiKeyProperties(Properties properties) {
+<span class="nc" id="L133">        this.clientBuilder.setApiKey(ApiKeys.builder().setProperties(properties).build());</span>
+<span class="nc" id="L134">    }</span>
+
+    /**
+     * Calls {@code clientBuilder.setApiKey(ApiKeys.builder().}{@link com.stormpath.sdk.api.ApiKeyBuilder#setIdPropertyName(String) setIdPropertyName(apiKeyIdPropertyName)}{@code .build())}.
+     *
+     * @param apiKeyIdPropertyName the name used to query for the API Key ID from a Properties instance.
+     * @see ClientBuilder#setApiKey(com.stormpath.sdk.api.ApiKey)
+     * @see com.stormpath.sdk.api.ApiKeyBuilder#setIdPropertyName(String)
+     * @since 0.2
+     */
+    public void setApiKeyIdPropertyName(String apiKeyIdPropertyName) {
+<span class="nc" id="L145">        this.clientBuilder.setApiKey(ApiKeys.builder().setIdPropertyName(apiKeyIdPropertyName).build());</span>
+<span class="nc" id="L146">    }</span>
+
+    /**
+     * Calls {@code clientBuilder.setApiKey(ApiKeys.builder().}{@link com.stormpath.sdk.api.ApiKeyBuilder#setSecretPropertyName(String) setSecretPropertyName(apiKeySecretPropertyName)}{@code .build())}.
+     *
+     * @param apiKeySecretPropertyName the name used to query for the API Key Secret from a Properties instance.
+     * @see ClientBuilder#setApiKey(com.stormpath.sdk.api.ApiKey)
+     * @see com.stormpath.sdk.api.ApiKeyBuilder#setSecretPropertyName(String)
+     * @since 0.2
+     */
+    public void setApiKeySecretPropertyName(String apiKeySecretPropertyName) {
+<span class="nc" id="L157">        this.clientBuilder.setApiKey(ApiKeys.builder().setSecretPropertyName(apiKeySecretPropertyName).build());</span>
+<span class="nc" id="L158">    }</span>
+
+    /**
+     * Uses the specified Shiro {@link CacheManager} instance as the Stormpath SDK Client's CacheManager, allowing both
+     * Shiro and Stormpath SDK to share the same cache mechanism.
+     * &lt;p/&gt;
+     * If for some reason you don't want to share the same cache mechanism, you can explicitly set a Stormpath SDK-only
+     * {@link com.stormpath.sdk.cache.CacheManager CacheManager} instance via the
+     * {@link #setStormpathCacheManager(com.stormpath.sdk.cache.CacheManager) setStormpathCacheManager} method.
+     *
+     * @param cacheManager the Shiro CacheManager to use for the Stormpath SDK Client's caching needs.
+     * @since 0.4.0
+     * @see #setStormpathCacheManager(com.stormpath.sdk.cache.CacheManager)
+     */
+    public void setCacheManager(CacheManager cacheManager) {
+<span class="nc" id="L173">        com.stormpath.sdk.cache.CacheManager stormpathCacheManager =</span>
+                new ShiroCacheManager(cacheManager);
+<span class="nc" id="L175">        this.clientBuilder.setCacheManager(stormpathCacheManager);</span>
+<span class="nc" id="L176">    }</span>
+
+    /**
+     * Calls {@code clientBuilder.}{@link ClientBuilder#setCacheManager(com.stormpath.sdk.cache.CacheManager) setCacheManager}
+     * using the specified Stormpath {@link com.stormpath.sdk.cache.CacheManager CacheManager} instance, but &lt;b&gt;note:&lt;/b&gt;
+     * This method should only be used if the Stormpath SDK should use a &lt;em&gt;different&lt;/em&gt; CacheManager than what
+     * Shiro uses.
+     * &lt;p/&gt;
+     * If you prefer that Shiro and the Stormpath SDK use the same cache mechanism to reduce complexity/configuration,
+     * configure your preferred Shiro {@code cacheManager} first and then use that cacheManager by calling the
+     * {@link #setCacheManager(org.apache.shiro.cache.CacheManager) setCacheManager(shiroCacheManager)} method
+     * instead of this one.
+     *
+     * @param cacheManager the Storpmath SDK-specific CacheManager to use for the Stormpath SDK Client's caching needs.
+     * @since 0.4.0
+     * @see #setCacheManager(org.apache.shiro.cache.CacheManager)
+     */
+    public void setStormpathCacheManager(com.stormpath.sdk.cache.CacheManager cacheManager) {
+<span class="nc" id="L194">        this.clientBuilder.setCacheManager(cacheManager);</span>
+<span class="nc" id="L195">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.eclemma.org/jacoco">JaCoCo</a> 0.7.7.201606060606</span></div></body></html>

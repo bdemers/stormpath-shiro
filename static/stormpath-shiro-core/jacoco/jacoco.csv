@@ -1,0 +1,14 @@
+GROUP,PACKAGE,CLASS,INSTRUCTION_MISSED,INSTRUCTION_COVERED,BRANCH_MISSED,BRANCH_COVERED,LINE_MISSED,LINE_COVERED,COMPLEXITY_MISSED,COMPLEXITY_COVERED,METHOD_MISSED,METHOD_COVERED
+Stormpath Shiro :: Core,com.stormpath.shiro.authz,CustomDataPermissionsEditor,7,234,3,29,0,61,3,22,0,9
+Stormpath Shiro :: Core,com.stormpath.shiro.config,DefaultClientFactory,215,0,22,0,57,0,21,0,10,0
+Stormpath Shiro :: Core,com.stormpath.shiro.client,ClientFactory,88,0,0,0,24,0,12,0,12,0
+Stormpath Shiro :: Core,com.stormpath.shiro.cache,ShiroCacheManager,0,19,0,0,0,6,0,2,0,2
+Stormpath Shiro :: Core,com.stormpath.shiro.cache,ShiroCache,0,25,0,0,0,7,0,4,0,4
+Stormpath Shiro :: Core,com.stormpath.shiro.realm,DefaultGroupRoleResolver,0,159,1,25,0,41,1,19,0,7
+Stormpath Shiro :: Core,com.stormpath.shiro.realm,CustomDataPermissionResolver,39,34,3,1,10,13,3,6,1,6
+Stormpath Shiro :: Core,com.stormpath.shiro.realm,StormpathWebRealm.AccessTokenResultAuthToken,21,0,0,0,9,0,5,0,5,0
+Stormpath Shiro :: Core,com.stormpath.shiro.realm,StormpathWebRealm,36,0,0,0,11,0,2,0,2,0
+Stormpath Shiro :: Core,com.stormpath.shiro.realm,AccountCustomDataPermissionResolver,5,3,0,0,1,1,1,1,1,1
+Stormpath Shiro :: Core,com.stormpath.shiro.realm,DefaultGroupRoleResolver.Mode,5,83,0,4,0,9,1,6,1,4
+Stormpath Shiro :: Core,com.stormpath.shiro.realm,GroupCustomDataPermissionResolver,5,3,0,0,1,1,1,1,1,1
+Stormpath Shiro :: Core,com.stormpath.shiro.realm,ApplicationRealm,183,288,29,15,46,85,23,26,6,21

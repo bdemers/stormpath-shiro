@@ -1,0 +1,6 @@
+{
+  "name": "Stormpath-shiro",
+  "tagline": "Apache Shiro plugin for Stormpath",
+  "body": "\r\n<script language=javascript>\r\nfunction redirect(){\r\n  window.location = \"https://stormpath.com\";\r\n}\r\n</script>\r\n\r\n<body onload=\"redirect()\">\r\nClick [here](https://stormpath.com) if not redirected to https://stormpath.com.\r\n</body>\r\n",
+  "note": "Don't delete this file! It's used internally to help with page regeneration."
+}
